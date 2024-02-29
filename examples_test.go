@@ -368,11 +368,6 @@ func ExampleCode_sqrt() {
 }
 
 func compileAndRun[T interface{ []byte | [32]byte }](code Code, callData T) []byte {
-	compiled, err := code.Compile()
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	var slice []byte
 	switch c := any(callData).(type) {
 	case []byte:
@@ -381,7 +376,7 @@ func compileAndRun[T interface{ []byte | [32]byte }](code Code, callData T) []by
 		slice = c[:]
 	}
 
-	got, err := runBytecode(compiled, slice)
+	got, err := code.Run(slice)
 	if err != nil {
 		log.Fatal(err)
 	}
