@@ -14,7 +14,7 @@ import (
 // error, otherwise returning the result. It's useful for testable examples that
 // don't have access to t.Fatal().
 func mustRunByteCode(compiled, callData []byte) []byte {
-	out, err := runBytecode(compiled, callData, false)
+	out, err := runBytecode(compiled, callData)
 	if err != nil {
 		log.Fatal(err)
 	}
