@@ -88,11 +88,10 @@ func TestRunCompiled(t *testing.T) {
 	}
 
 	type test struct {
-		name       string
-		code       Code
-		callData   []byte
-		staticCall bool
-		want       []byte
+		name     string
+		code     Code
+		callData []byte
+		want     []byte
 	}
 
 	tests := []test{
