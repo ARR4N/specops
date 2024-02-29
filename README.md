@@ -1,6 +1,6 @@
 # SpecialOps [![Go](https://github.com/solidifylabs/specialops/actions/workflows/go.yml/badge.svg)](https://github.com/solidifylabs/specialops/actions/workflows/go.yml) [![Go Reference](https://pkg.go.dev/badge/github.com/solidifylabs/specialops.svg)](https://pkg.go.dev/github.com/solidifylabs/specialops)
 
-> `specialops` is a low-level, domain-specific language for crafting [Ethereum VM](https://ethereum.org/en/developers/docs/evm) bytecode in Go.
+> `specialops` is a low-level, domain-specific language (and compiler) for crafting [Ethereum VM](https://ethereum.org/en/developers/docs/evm) bytecode in Go.
 
 This is a _very_ early release. In fact, it's just a weekend project gone rogue
 so is less than a week old.
@@ -30,6 +30,12 @@ bytecode unchanged.
 - [ ] Automatic stack permutation
 - [ ] Standalone compiler
 - [ ] Interactive debugger
+
+### Documentation
+
+The [`specialops` Go
+documentation](https://pkg.go.dev/github.com/solidifylabs/specialops) covers all
+functionality.
 
 ## Examples
 
