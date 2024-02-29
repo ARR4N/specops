@@ -4,44 +4,17 @@ import (
 	"bytes"
 	"fmt"
 	"log"
-	"math/big"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/params"
 	"github.com/holiman/uint256"
 )
-
-func runBytecode(compiled, callData []byte) ([]byte, error) {
-	interp := vm.NewEVM(
-		vm.BlockContext{
-			BlockNumber: big.NewInt(99),
-			Random:      &common.MaxHash, // non-nil -> post merge
-		},
-		vm.TxContext{},
-		nil, /*statedb*/
-		&params.ChainConfig{
-			LondonBlock: big.NewInt(0),
-			CancunTime:  new(uint64),
-		},
-		vm.Config{},
-	).Interpreter()
-
-	contract := &vm.Contract{
-		Code: compiled,
-		Gas:  30e6,
-	}
-
-	return interp.Run(contract, callData, false /*static*/)
-}
 
 // mustRunByteCode propagates arguments to runBytecode, calling log.Fatal() on
 // error, otherwise returning the result. It's useful for testable examples that
 // don't have access to t.Fatal().
 func mustRunByteCode(compiled, callData []byte) []byte {
-	out, err := runBytecode(compiled, callData)
+	out, err := runBytecode(compiled, callData, false)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -211,14 +184,14 @@ func TestRunCompiled(t *testing.T) {
 			}
 			t.Logf("Bytecode: %#x", compiled)
 
-			got, err := runBytecode(compiled, tt.callData)
+			got, err := tt.code.Run(tt.callData)
 			if err != nil {
-				t.Fatalf("%T.Run([%T.Compile() output]) error %v", &vm.EVMInterpreter{}, tt.code, err)
+				t.Fatalf("%T.Run(%#x) error %v", tt.code, tt.callData, err)
 			}
 			if !bytes.Equal(got, tt.want) {
 				t.Errorf(
-					"%T.Run([%T.Compile() output]) got:\n%#x\n%v\n\nwant:\n%#x\n%v",
-					&vm.EVMInterpreter{}, tt.code,
+					"%T.Run(%#x) got:\n%#x\n%v\n\nwant:\n%#x\n%v",
+					tt.code, tt.callData,
 					got, new(uint256.Int).SetBytes(got),
 					tt.want, new(uint256.Int).SetBytes(tt.want),
 				)
