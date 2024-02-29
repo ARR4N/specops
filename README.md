@@ -29,6 +29,7 @@ bytecode unchanged.
 - [x] Compiler-state assertions (e.g. expected stack depth)
 - [ ] Automatic stack permutation
 - [ ] Standalone compiler
+- [x] In-process EVM execution
 - [ ] Interactive debugger
 
 ### Documentation
@@ -60,7 +61,9 @@ code := Code{
     Fn(RETURN, PUSH(32-len(hello)), PUSH(len(hello))),
 }
 
-byteCode, err := code.Compile()
+bytecode, err := code.Compile()
+// or
+result, err := code.Run(nil /*callData*/)
 ```
 
 ### Other examples
