@@ -1,4 +1,4 @@
-# SpecialOps
+# SpecialOps [![Go](https://github.com/solidifylabs/specialops/actions/workflows/go.yml/badge.svg)](https://github.com/solidifylabs/specialops/actions/workflows/go.yml) [![Go Reference](https://pkg.go.dev/badge/github.com/solidifylabs/specialops.svg)](https://pkg.go.dev/github.com/solidifylabs/specialops)
 
 > `specialops` is a domain-specific language for crafting EVM bytecode in Go.
 
