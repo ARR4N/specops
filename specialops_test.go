@@ -213,7 +213,7 @@ func bytecode(t *testing.T, b types.Bytecoder) []byte {
 	return buf
 }
 
-func TestPUSHBytesZeroes(t *testing.T) {
+func TestPUSHZeroes(t *testing.T) {
 	push0 := []byte{byte(vm.PUSH0)}
 
 	t.Run("all-zero bytes", func(t *testing.T) {
