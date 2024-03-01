@@ -117,7 +117,24 @@ func (p pusher) Bytecode() ([]byte, error) {
 	if n == 0 || n > 32 {
 		return nil, fmt.Errorf("len(%T.ToPush()) == %d must be in [1,32]", p.StackPusher, n)
 	}
-	return append([]byte{byte(vm.PUSH1 + vm.OpCode(n) - 1)}, buf...), nil
+
+	size := n
+	for _, b := range buf {
+		if b == 0 {
+			size--
+		} else {
+			break
+		}
+	}
+	if size == 0 {
+		return []byte{byte(vm.PUSH0)}, nil
+	}
+
+	return append(
+		// PUSH0 to PUSH32 are contiguous, so we can perform arithmetic on them.
+		[]byte{byte(vm.PUSH0 + vm.OpCode(size))},
+		buf[n-size:]...,
+	), nil
 }
 
 // PUSHSelector returns a PUSH4 Bytecoder that pushes the selector of the
@@ -126,7 +143,9 @@ func PUSHSelector(sig string) Bytecoder {
 	return PUSH(crypto.Keccak256([]byte(sig))[:4])
 }
 
-// PUSHBytes returns a PUSH<n> Bytecoder that pushes the `n` bytes.
+// PUSHBytes accepts [1,32] bytes, returning a PUSH<x> Bytecoder where x is the
+// smallest number of bytes (possibly zero) that can represent the concatenated
+// values; i.e. x = len(bs) - leadingZeros(bs).
 func PUSHBytes(bs ...byte) Bytecoder {
 	return BytecoderFromStackPusher(bytesPusher(bs))
 }

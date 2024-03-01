@@ -6,7 +6,10 @@ import (
 	"log"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/google/go-cmp/cmp"
 	"github.com/holiman/uint256"
 )
 
@@ -198,4 +201,59 @@ func TestRunCompiled(t *testing.T) {
 			}
 		})
 	}
+}
+
+func bytecode(t *testing.T, b Bytecoder) []byte {
+	t.Helper()
+	buf, err := b.Bytecode()
+	if err != nil {
+		t.Fatalf("%T.Bytecode() error %v", b, err)
+	}
+	return buf
+}
+
+func TestPUSHBytesZeroes(t *testing.T) {
+	push0 := []byte{byte(vm.PUSH0)}
+
+	t.Run("all-zero bytes", func(t *testing.T) {
+		for i := 1; i <= 32; i++ {
+			got := bytecode(t, PUSHBytes(make([]byte, i)...))
+			if !bytes.Equal(got, push0) {
+				t.Errorf("PUSHBytes([%d zero bytes]).Bytecode() got %#x; want {vm.PUSH0}", i, got)
+			}
+		}
+	})
+
+	t.Run("various types zero", func(t *testing.T) {
+		for _, b := range []Bytecoder{
+			PUSH(int(0)),
+			PUSH(uint64(0)),
+			PUSH(common.Address{}),
+			PUSH(*uint256.NewInt(0)),
+			PUSH(byte(0)),
+		} {
+			got := bytecode(t, b)
+			if !bytes.Equal(got, push0) {
+				t.Errorf("%#x; want {vm.PUSH0}", got)
+			}
+		}
+
+	})
+
+	t.Run("leading zeros stripped", func(t *testing.T) {
+		for i := 0; i < 32; i++ {
+			var word [32]byte
+			word[i] = 1
+
+			equiv := make([]byte, 32-i)
+			equiv[0] = 1
+
+			got := bytecode(t, PUSHBytes(word[:]...))
+			want := bytecode(t, PUSHBytes(equiv...))
+
+			if diff := cmp.Diff(want, got); diff != "" {
+				t.Errorf("Bytecode mismatch between long PUSHBytes(%#x) and short PUSHBytes(%#x); diff (-short +long):\n%s", word, equiv, diff)
+			}
+		}
+	})
 }

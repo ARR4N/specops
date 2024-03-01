@@ -23,8 +23,9 @@ bytecode unchanged.
 - [x] `JUMPDEST` labels (absolute)
 - [ ] `JUMPDEST` labels (relative to `PC`)
 - [x] Function-like syntax (optional)
-- [x] Inverted `DUP`/`SWAP` special opcodes from "bottom" of stack (i.e. pseudo-variables)
+- [x] Inverted `DUP`/`SWAP` special opcodes from "bottom" of stack (a.k.a. pseudo-variables)
 - [x] `PUSH<T>` for native Go types
+- [X] `PUSH(v)` length detection
 - [x] Macros
 - [x] Compiler-state assertions (e.g. expected stack depth)
 - [ ] Automatic stack permutation
