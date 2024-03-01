@@ -143,7 +143,9 @@ func PUSHSelector(sig string) Bytecoder {
 	return PUSH(crypto.Keccak256([]byte(sig))[:4])
 }
 
-// PUSHBytes accepts [1,32] bytes, returning a PUSH<n> Bytecoder.
+// PUSHBytes accepts [1,32] bytes, returning a PUSH<x> Bytecoder where x is the
+// smallest number of bytes (possibly zero) that can represent the concatenated
+// values; i.e. x = len(bs) - leadingZeros(bs).
 func PUSHBytes(bs ...byte) Bytecoder {
 	return BytecoderFromStackPusher(bytesPusher(bs))
 }
