@@ -31,7 +31,14 @@ bytecode unchanged.
 - [ ] Automatic stack permutation
 - [ ] Standalone compiler
 - [x] In-process EVM execution
-- [ ] Interactive debugger
+- [x] Debugger
+  * [x] Stepping
+  * [ ] Breakpoints
+  * [x] Programmatic inspection (e.g. native Go tests at opcode resolution)
+    * [x] Memory
+    * [x] Stack
+  * [ ] User interface
+- [ ] Fork testing with RPC URL
 
 ### Documentation
 

@@ -22,6 +22,35 @@ func (c Code) Run(callData []byte, opts ...runopts.Option) ([]byte, error) {
 	return runBytecode(compiled, callData, opts...)
 }
 
+// StartDebugging appends a runopts.Debugger (`dbg`) to the Options, calls
+// c.Run() in a new goroutine, and returns `dbg` along with a function to
+// retrieve ther esults of Run(). The function will block until Run() returns,
+// i.e. when dbg.Done() returns true. There is no need to call dbg.Wait().
+//
+// If execution never completes, such that dbg.Done() always returns false, then
+// the goroutine will be leaked.
+func (c Code) StartDebugging(callData []byte, opts ...runopts.Option) (*runopts.Debugger, func() ([]byte, error)) {
+	dbg := runopts.NewDebugger()
+	opts = append(opts, dbg)
+
+	var (
+		result []byte
+		err    error
+	)
+	done := make(chan struct{})
+	go func() {
+		result, err = c.Run(callData, opts...)
+		close(done)
+	}()
+
+	dbg.Wait()
+
+	return dbg, func() ([]byte, error) {
+		<-done
+		return result, err
+	}
+}
+
 func runBytecode(compiled, callData []byte, opts ...runopts.Option) ([]byte, error) {
 	cfg, err := newRunConfig(opts...)
 	if err != nil {
