@@ -275,7 +275,11 @@ func (s *spliceConcat) shrink() error {
 func (s *spliceConcat) bytes() ([]byte, error) {
 	code := new(bytes.Buffer)
 	for _, sp := range s.all {
-		sp.buf.WriteTo(code)
+		if _, err := sp.buf.WriteTo(code); err != nil {
+			// This should be impossible, but ignoring the error angers the
+			// linter.
+			return nil, fmt.Errorf("%T.bytes(): %T.buf.WriteTo(%T): %v", s, sp, code, err)
+		}
 
 		switch sp.op.(type) {
 		case JUMPDEST:
