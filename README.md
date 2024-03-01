@@ -69,9 +69,29 @@ code := Code{
     Fn(RETURN, PUSH(32-len(hello)), PUSH(len(hello))),
 }
 
+// ----- COMPILE -----
 bytecode, err := code.Compile()
-// or
-result, err := code.Run(nil /*callData*/)
+// ...
+
+// ----- EXECUTE -----
+
+result, err := code.Run(nil /*callData*/ /*, [runopts.Options]...*/)
+// ...
+
+// ----- DEBUG (Programmatic) -----
+
+dbg, results := code.StartDebugging(nil /*callData*/ /*, Options...*/)
+defer dbg.FastForward() // best practice to avoid resource leaks
+
+state := dbg.State() // is updated on calls to Step() / FastForward()
+
+for !dbg.Done() {
+  dbg.Step()
+  fmt.Println("Peek-a-boo", state.CopeContext.Stack().Back(0))
+}
+
+result, err := results()
+//...
 ```
 
 ### Other examples
