@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/core/vm"
+
+	"github.com/solidifylabs/specialops/types"
 )
 
 // A splice is a (possibly empty) buffer of bytecode, followed by either a
@@ -13,7 +15,7 @@ import (
 // determine. A splice allows for lazy determination of locations.
 type splice struct {
 	buf bytes.Buffer
-	op  Bytecoder // either JUMPDEST or PUSHJUMPDEST
+	op  types.Bytecoder // either JUMPDEST or PUSHJUMPDEST
 	// If op is a JUMPDEST
 	offset *int // Current estimate of offset in the bytecode, or nil if not yet estimated
 	// If op is a PUSHJUMPDEST
@@ -43,7 +45,7 @@ func (s *spliceConcat) curr() *splice {
 // to the previous splice.
 func newSpliceBuffer[T interface{ JUMPDEST | PUSHJUMPDEST }](s *spliceConcat, op T) *bytes.Buffer {
 	curr := s.curr()
-	curr.op = Bytecoder(op)
+	curr.op = types.Bytecoder(op)
 	if j, ok := any(op).(JUMPDEST); ok {
 		s.dests[j] = curr
 	}
@@ -59,7 +61,7 @@ func (c Code) flatten() Code {
 	out := make(Code, 0, len(c))
 	for _, bc := range c {
 		switch bc := bc.(type) {
-		case BytecodeHolder:
+		case types.BytecodeHolder:
 			out = append(out, Code(bc.Bytecoders()).flatten()...)
 		default:
 			out = append(out, bc)

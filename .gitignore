@@ -1,3 +1,9 @@
 # IDEs
-
 workspace.code-workspace
+
+# Scratchpad
+experimental/**
+
+# Coverage
+cover.out
+lcov.info
