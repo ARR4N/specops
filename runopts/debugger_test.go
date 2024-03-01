@@ -1,31 +1,22 @@
 package runopts_test
 
 import (
+	"bytes"
 	"testing"
 
 	. "github.com/solidifylabs/specialops"
-	. "github.com/solidifylabs/specialops/runopts" // Note that we're in the runopts_test package to avoid circular deps
 )
 
 func TestDebugger(t *testing.T) {
-	c := Code{
+	const retVal = 42
+	code := Code{
 		PUSH0, PUSH(1), PUSH(2),
-		Fn(MSTORE, PUSH(0), PUSH(42)),
+		Fn(MSTORE, PUSH(0), PUSH(retVal)),
 		Fn(RETURN, PUSH0, PUSH(32)),
 	}
 
-	dbg := NewDebugger()
-
-	done := make(chan struct{})
-	go func() {
-		defer func() { close(done) }()
-		if _, err := c.Run(nil, dbg); err != nil {
-			t.Errorf("%T.Run(nil, %T) error %v", c, dbg, err)
-		}
-	}()
-
+	dbg, results := code.StartDebugging(nil)
 	state := dbg.State() // can be called any time
-	dbg.Wait()
 
 	wantPCs := []uint64{0}
 	pcIncrs := []uint64{
@@ -55,5 +46,11 @@ func TestDebugger(t *testing.T) {
 		})
 	}
 
-	<-done
+	var want [32]byte
+	want[31] = retVal
+
+	got, err := results()
+	if err != nil || !bytes.Equal(got, want[:]) {
+		t.Errorf("%T.StartDebugging() results function returned %#x, err = %v; want %#x; nil error", code, got, err, want[:])
+	}
 }
