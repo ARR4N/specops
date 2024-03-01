@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/google/go-cmp/cmp"
 	"github.com/holiman/uint256"
+	"github.com/solidifylabs/specialops/types"
 )
 
 // mustRunByteCode propagates arguments to runBytecode, calling log.Fatal() on
@@ -203,7 +204,7 @@ func TestRunCompiled(t *testing.T) {
 	}
 }
 
-func bytecode(t *testing.T, b Bytecoder) []byte {
+func bytecode(t *testing.T, b types.Bytecoder) []byte {
 	t.Helper()
 	buf, err := b.Bytecode()
 	if err != nil {
@@ -225,7 +226,7 @@ func TestPUSHBytesZeroes(t *testing.T) {
 	})
 
 	t.Run("various types zero", func(t *testing.T) {
-		for _, b := range []Bytecoder{
+		for _, b := range []types.Bytecoder{
 			PUSH(int(0)),
 			PUSH(uint64(0)),
 			PUSH(common.Address{}),

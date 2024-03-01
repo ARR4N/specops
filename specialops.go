@@ -18,11 +18,13 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/holiman/uint256"
+
+	"github.com/solidifylabs/specialops/types"
 )
 
 // Code is a slice of Bytecoders; it is itself a Bytecoder, allowing for
 // nesting.
-type Code []Bytecoder
+type Code []types.Bytecoder
 
 // Bytecode always returns an error; use Code.Compile instead(), which flattens
 // nested Code instances.
@@ -31,21 +33,8 @@ func (c Code) Bytecode() ([]byte, error) {
 }
 
 // Bytecoders returns the Code as a slice of Bytecoders.
-func (c Code) Bytecoders() []Bytecoder {
-	return []Bytecoder(c)
-}
-
-// A Bytecoder returns raw EVM bytecode. If the returned bytecode is the
-// concatenation of multiple Bytecoder outputs, the type MUST also implement
-// BytecodeHolder.
-type Bytecoder interface {
-	Bytecode() ([]byte, error)
-}
-
-// A BytecodeHolder is a concatenation of Bytecoders.
-type BytecodeHolder interface {
-	Bytecoder
-	Bytecoders() []Bytecoder
+func (c Code) Bytecoders() []types.Bytecoder {
+	return []types.Bytecoder(c)
 }
 
 // Fn returns a Bytecoder that returns the concatenation of the *reverse* of
@@ -55,7 +44,7 @@ type BytecodeHolder interface {
 //
 // Although the returned BytecodeHolder can contain JUMPDESTs, they're hard to
 // reason about so should be used with care.
-func Fn(bcs ...Bytecoder) BytecodeHolder {
+func Fn(bcs ...types.Bytecoder) types.BytecodeHolder {
 	c := Code(bcs)
 	for i, n := 0, len(c); i < n/2; i++ {
 		j := n - i - 1
@@ -96,58 +85,17 @@ func (p PUSHJUMPDEST) Bytecode() ([]byte, error) {
 	return nil, fmt.Errorf("direct call to %T.Bytecode()", p)
 }
 
-// A StackPusher returns [1,32] bytes to be pushed to the stack.
-type StackPusher interface {
-	ToPush() []byte
-}
-
-// BytecoderFromStackPusher returns a Bytecoder that calls s.ToPush() and
-// prepends the appropriate PUSH<N> opcode to the returned bytecode.
-func BytecoderFromStackPusher(s StackPusher) Bytecoder {
-	return pusher{s}
-}
-
-type pusher struct {
-	StackPusher
-}
-
-func (p pusher) Bytecode() ([]byte, error) {
-	buf := p.ToPush()
-	n := len(buf)
-	if n == 0 || n > 32 {
-		return nil, fmt.Errorf("len(%T.ToPush()) == %d must be in [1,32]", p.StackPusher, n)
-	}
-
-	size := n
-	for _, b := range buf {
-		if b == 0 {
-			size--
-		} else {
-			break
-		}
-	}
-	if size == 0 {
-		return []byte{byte(vm.PUSH0)}, nil
-	}
-
-	return append(
-		// PUSH0 to PUSH32 are contiguous, so we can perform arithmetic on them.
-		[]byte{byte(vm.PUSH0 + vm.OpCode(size))},
-		buf[n-size:]...,
-	), nil
-}
-
 // PUSHSelector returns a PUSH4 Bytecoder that pushes the selector of the
 // signature, i.e. `sha3(sig)[:4]`.
-func PUSHSelector(sig string) Bytecoder {
+func PUSHSelector(sig string) types.Bytecoder {
 	return PUSH(crypto.Keccak256([]byte(sig))[:4])
 }
 
 // PUSHBytes accepts [1,32] bytes, returning a PUSH<x> Bytecoder where x is the
 // smallest number of bytes (possibly zero) that can represent the concatenated
 // values; i.e. x = len(bs) - leadingZeros(bs).
-func PUSHBytes(bs ...byte) Bytecoder {
-	return BytecoderFromStackPusher(bytesPusher(bs))
+func PUSHBytes(bs ...byte) types.Bytecoder {
+	return types.BytecoderFromStackPusher(bytesPusher(bs))
 }
 
 type bytesPusher []byte
@@ -159,8 +107,8 @@ func (p bytesPusher) ToPush() []byte { return []byte(p) }
 func PUSH[P interface {
 	int | uint64 | common.Address | uint256.Int | byte | []byte | JUMPDEST | string
 }](v P,
-) Bytecoder {
-	pToB := BytecoderFromStackPusher
+) types.Bytecoder {
+	pToB := types.BytecoderFromStackPusher
 
 	switch v := any(v).(type) {
 	case int:
