@@ -66,14 +66,15 @@ func (o opCode) String() string {
 	return vm.OpCode(o).String()
 }
 
-// A JUMPDEST is a Bytecoder that always returns vm.JUMPDEST while also storing
-// its location in the bytecode for use via a PUSHJUMPDEST or
+// A JUMPDEST is a Bytecoder that is converted into a vm.JUMPDEST while also
+// storing its location in the bytecode for use via a PUSHJUMPDEST or
 // PUSH[string|JUMPDEST](<lbl>).
 type JUMPDEST string
 
-// Bytecode returns []byte{vm.JUMPDEST}.
+// Bytecode always returns an error as PUSHJUMPDEST values have special handling
+// inside Code.Compile().
 func (j JUMPDEST) Bytecode() ([]byte, error) {
-	return []byte{byte(vm.JUMPDEST)}, nil
+	return nil, fmt.Errorf("direct call to %T.Bytecode()", j)
 }
 
 // PUSHJUMPDEST pushes the bytecode location of the respective JUMPDEST.

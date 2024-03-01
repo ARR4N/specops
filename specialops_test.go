@@ -258,3 +258,22 @@ func TestPUSHZeroes(t *testing.T) {
 		}
 	})
 }
+
+func TestNoCallBytecode(t *testing.T) {
+	// Some special Bytecoder implementations are only compiler hints and should
+	// never have their Bytecode() method called. This artificially reduces test
+	// coverage because they're impossible paths, and this test addresses that.
+
+	for _, b := range []types.Bytecoder{
+		Code{},
+		JUMPDEST(""),
+		PUSHJUMPDEST(""),
+		ExpectStackDepth(0),
+		SetStackDepth(0),
+		Inverted(0),
+	} {
+		if _, err := b.Bytecode(); err == nil {
+			t.Errorf("Special Bytecoder %T.Bytecode() returned non-nil error", b)
+		}
+	}
+}
