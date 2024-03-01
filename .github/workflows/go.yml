@@ -12,7 +12,7 @@ on:
 
 jobs:
 
-  build:
+  go:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -27,3 +27,9 @@ jobs:
 
     - name: Test
       run: go test -v ./...
+
+    - name: Lint
+      run: golint ./...
+
+    - name: Vet
+      run: go vet ./...
