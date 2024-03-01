@@ -25,19 +25,18 @@ type Option interface {
 	Apply(*Configuration) error
 }
 
-// A FuncOption converts any function into an Option by calling itself as
-// Apply().
-type FuncOption func(*Configuration) error
+// A Func converts a function into an Option by calling itself as Apply().
+type Func func(*Configuration) error
 
 // Apply returns f(c).
-func (f FuncOption) Apply(c *Configuration) error {
+func (f Func) Apply(c *Configuration) error {
 	return f(c)
 }
 
 // ReadOnly sets the `readOnly` argument to true when calling
 // EVMInterpreter.Run(), equivalent to a static call.
 func ReadOnly() Option {
-	return FuncOption(func(c *Configuration) error {
+	return Func(func(c *Configuration) error {
 		c.ReadOnly = true
 		return nil
 	})
