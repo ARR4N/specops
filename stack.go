@@ -1,4 +1,4 @@
-package specialops
+package specops
 
 import (
 	"fmt"

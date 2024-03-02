@@ -1,4 +1,4 @@
-// The opcopy binary generates a Go file for use in the `specialops` package.
+// The opcopy binary generates a Go file for use in the `specops` package.
 // It mirrors all EVM opcodes that don't have special representations, and
 // provides a mapping from all opcodes to the number of values they pop/push
 // from the stack.
@@ -63,7 +63,7 @@ func run() error {
 		}
 	}
 
-	tmpl := template.Must(template.New("go").Parse(`package specialops
+	tmpl := template.Must(template.New("go").Parse(`package specops
 
 //
 // GENERATED CODE - DO NOT EDIT

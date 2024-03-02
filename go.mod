@@ -1,4 +1,4 @@
-module github.com/solidifylabs/specialops
+module github.com/solidifylabs/specops
 
 go 1.20
 

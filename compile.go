@@ -1,4 +1,4 @@
-package specialops
+package specops
 
 import (
 	"bytes"
@@ -6,7 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	"github.com/solidifylabs/specialops/types"
+	"github.com/solidifylabs/specops/types"
 )
 
 // A splice is a (possibly empty) buffer of bytecode, followed by either a
