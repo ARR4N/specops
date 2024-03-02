@@ -30,7 +30,7 @@ bytecode unchanged.
 - [x] Compiler-state assertions (e.g. expected stack depth)
 - [ ] Automatic stack permutation
 - [ ] Standalone compiler
-- [x] In-process EVM execution
+- [x] In-process EVM execution (geth)
 - [x] Debugger
   * [x] Stepping
   * [ ] Breakpoints
@@ -38,6 +38,8 @@ bytecode unchanged.
     * [x] Memory
     * [x] Stack
   * [ ] User interface
+- [ ] Source mapping
+- [ ] Coverage analysis
 - [ ] Fork testing with RPC URL
 
 ### Documentation
@@ -87,7 +89,7 @@ state := dbg.State() // is updated on calls to Step() / FastForward()
 
 for !dbg.Done() {
   dbg.Step()
-  fmt.Println("Peek-a-boo", state.CopeContext.Stack().Back(0))
+  fmt.Println("Peek-a-boo", state.ScopeContext.Stack().Back(0))
 }
 
 result, err := results()

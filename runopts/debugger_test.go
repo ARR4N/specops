@@ -2,9 +2,13 @@ package runopts_test
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"reflect"
+	"strings"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/core/vm"
 	. "github.com/solidifylabs/specialops"
 )
 
@@ -34,7 +38,10 @@ func TestDebugger(t *testing.T) {
 
 	for ffAt, steps := 0, len(wantPCs); ffAt < steps; ffAt++ { // using range wantPCs, while the same, is misleading
 		t.Run(fmt.Sprintf("fast-forward after step %d", ffAt), func(t *testing.T) {
-			dbg, results := code.StartDebugging(nil)
+			dbg, results, err := code.StartDebugging(nil)
+			if err != nil { // compilation error
+				t.Fatalf("%T.StartDebugging(nil) error %v", code, err)
+			}
 			defer dbg.FastForward() // best practice to avoid resource leakage
 
 			state := dbg.State() // can be called any time
@@ -63,6 +70,75 @@ func TestDebugger(t *testing.T) {
 			want[31] = retVal
 			if err != nil || !bytes.Equal(got, want[:]) {
 				t.Errorf("%T.StartDebugging() results function returned %#x, err = %v; want %#x; nil error", code, got, err, want[:])
+			}
+		})
+	}
+}
+
+func TestDebuggerCompilationError(t *testing.T) {
+	code := Code{
+		ExpectStackDepth(5),
+	}
+	if _, _, err := code.StartDebugging(nil); err == nil || !strings.Contains(err.Error(), "Compile()") {
+		t.Errorf("%T.StartDebugging(nil) with known compilation failure got err %v; want containing %q", code, err, "Compile()")
+	}
+}
+
+func TestDebuggerErrors(t *testing.T) {
+	const invalid = vm.OpCode(0xf8)
+	if vm.StringToOp(invalid.String()) != 0 {
+		// This may happen if the above opcode is added. Any invalid value suffices.
+		t.Fatalf("Bad test setup; %[1]T(%[1]d) = %[1]v is valid; want invalid", invalid)
+	}
+
+	tests := []struct {
+		name        string
+		code        Code
+		wantErrType reflect.Type // errors.As doesn't play nicely with any/error
+	}{
+		{
+			name: "immediate underflow",
+			code: Code{
+				SetStackDepth(2), RETURN, // compiles to {RETURN}
+			},
+			wantErrType: reflect.TypeOf(new(vm.ErrStackUnderflow)),
+		},
+		{
+			name: "delayed underflow",
+			code: Code{
+				PUSH0, SetStackDepth(2), RETURN, // compiles to {PUSH0, RETURN}
+			},
+			wantErrType: reflect.TypeOf(new(vm.ErrStackUnderflow)),
+		},
+		{
+			name: "invalid opcode",
+			code: Code{
+				Raw{byte(invalid)},
+			},
+			wantErrType: reflect.TypeOf(new(vm.ErrInvalidOpCode)),
+		},
+		{
+			name: "explicit revert",
+			code: Code{
+				Fn(REVERT, PUSH0, PUSH0),
+			},
+			wantErrType: reflect.TypeOf(errors.New("")),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dbg, results, err := tt.code.StartDebugging(nil)
+			if err != nil {
+				t.Fatalf("%T.StartDebugging(nil) error %v", tt.code, err)
+			}
+			dbg.FastForward()
+
+			if err := dbg.State().Err; reflect.TypeOf(err) != tt.wantErrType {
+				t.Errorf("%T.State().Err = %T(%v); want type %v", dbg, err, err, tt.wantErrType)
+			}
+			if _, err := results(); reflect.TypeOf(errors.Unwrap(err)) != tt.wantErrType {
+				t.Errorf("%T.StartDebugging() results function returned error %T(%v); want type %v wrapped", dbg, err, err, tt.wantErrType)
 			}
 		})
 	}

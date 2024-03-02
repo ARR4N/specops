@@ -29,17 +29,27 @@ func (c Code) Run(callData []byte, opts ...runopts.Option) ([]byte, error) {
 //
 // If execution never completes, such that dbg.Done() always returns false, then
 // the goroutine will be leaked.
-func (c Code) StartDebugging(callData []byte, opts ...runopts.Option) (*runopts.Debugger, func() ([]byte, error)) {
+//
+// Any compilation error will be returned by StartDebugging() while execution
+// errors are returned by a call to the returned function. Said execution errors
+// can be errors.Unwrap()d to access the same error available in
+// `dbg.State().Err`.
+func (c Code) StartDebugging(callData []byte, opts ...runopts.Option) (*runopts.Debugger, func() ([]byte, error), error) {
+	compiled, err := c.Compile()
+	if err != nil {
+		return nil, nil, fmt.Errorf("%T.Compile(): %v", c, err)
+	}
+
 	dbg := runopts.NewDebugger()
 	opts = append(opts, dbg)
 
 	var (
 		result []byte
-		err    error
+		resErr error
 	)
 	done := make(chan struct{})
 	go func() {
-		result, err = c.Run(callData, opts...)
+		result, resErr = runBytecode(compiled, callData, opts...)
 		close(done)
 	}()
 
@@ -47,8 +57,8 @@ func (c Code) StartDebugging(callData []byte, opts ...runopts.Option) (*runopts.
 
 	return dbg, func() ([]byte, error) {
 		<-done
-		return result, err
-	}
+		return result, resErr
+	}, nil
 }
 
 func runBytecode(compiled, callData []byte, opts ...runopts.Option) ([]byte, error) {
@@ -71,7 +81,7 @@ func runBytecode(compiled, callData []byte, opts ...runopts.Option) ([]byte, err
 
 	out, err := interp.Run(cc, callData, cfg.ReadOnly)
 	if err != nil {
-		return nil, fmt.Errorf("%T.Run([%T.Compile()], [callData], readOnly=%t): %v", interp, Code{}, cfg.ReadOnly, err)
+		return nil, fmt.Errorf("%T.Run([%T.Compile()], [callData], readOnly=%t): %w", interp, Code{}, cfg.ReadOnly, err)
 	}
 	return out, nil
 }
