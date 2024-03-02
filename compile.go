@@ -152,6 +152,10 @@ CodeLoop:
 
 		case PUSHJUMPDEST:
 
+		case Raw:
+			code, _ := use.Bytecode() // always returns nil error
+			buf.Write(code)
+
 		default:
 			code, err := use.Bytecode()
 			if err != nil {

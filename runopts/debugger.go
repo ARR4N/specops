@@ -11,6 +11,8 @@ import (
 // Execution SHOULD be advanced until Debugger.Done() returns true otherwise
 // resources will be leaked. Best practice is to always call FastForward(),
 // usually in a deferred function.
+//
+// Debugger.State().Err SHOULD be checked once Debugger.Done() returns true.
 func NewDebugger() *Debugger {
 	started := make(chan started)
 	step := make(chan step)
@@ -198,7 +200,7 @@ func (d *debugger) CaptureState(pc uint64, op vm.OpCode, gasLeft, gasCost uint64
 
 	defer func() {
 		switch op {
-		case vm.STOP, vm.RETURN, vm.REVERT:
+		case vm.STOP, vm.RETURN: // REVERT will end up in CaptureFault().
 			// Unlike d.started, we don't use a sync.Once for this because
 			// if it's called twice then we have a bug and want to know
 			// about it.
@@ -221,8 +223,6 @@ func (d *debugger) CaptureState(pc uint64, op vm.OpCode, gasLeft, gasCost uint64
 func (d *debugger) CaptureFault(pc uint64, op vm.OpCode, gasLeft, gasCost uint64, scope *vm.ScopeContext, depth int, err error) {
 	d.setStarted()
 	defer func() { close(d.done) }()
-
-	// TODO: communicate the fault to the user
 
 	d.last.PC = pc
 	d.last.Op = op
