@@ -1,4 +1,4 @@
-// Package runopts provides configuration options for specialops.Code.Run().
+// Package runopts provides configuration options for specops.Code.Run().
 package runopts
 
 import (
@@ -7,7 +7,7 @@ import (
 )
 
 // A Configuration carries all values that can be modified to configure a call
-// to specialops.Code.Run(). It is intially set by Run() and then passed to all
+// to specops.Code.Run(). It is intially set by Run() and then passed to all
 // Options to be modified.
 type Configuration struct {
 	// vm.NewEVM()

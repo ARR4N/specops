@@ -1,4 +1,4 @@
-package specialops
+package specops
 
 import (
 	"fmt"
@@ -33,7 +33,7 @@ func Example_helloWorld() {
 
 func ExampleCode_wellKnown() {
 	// This example demonstrates some well-known bytecode examples implemented
-	// with `specialops`:
+	// with `specops`:
 	//
 	// - EIP-1167 Minimal Proxy Contract
 	// - 0age/metamorphic Metamorphic contract constructor https://github.com/0age/metamorphic/blob/55adac1d2487046002fc33a5dff7d669b5419a3a/contracts/MetamorphicContractFactory.sol#L55

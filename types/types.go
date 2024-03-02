@@ -1,4 +1,4 @@
-// Package types defines types used by the specialops package, which is intended
+// Package types defines types used by the specops package, which is intended
 // to be dot-imported so requires a minimal footprint of exported symbols.
 package types
 

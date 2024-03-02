@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/core/vm"
-	. "github.com/solidifylabs/specialops"
+	. "github.com/solidifylabs/specops"
 )
 
 func TestDebugger(t *testing.T) {

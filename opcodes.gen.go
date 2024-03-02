@@ -1,4 +1,4 @@
-package specialops
+package specops
 
 //
 // GENERATED CODE - DO NOT EDIT

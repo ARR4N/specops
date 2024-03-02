@@ -1,4 +1,4 @@
-// Package specialops implements a DSL for crafting raw EVM bytecode. It
+// Package specops implements a DSL for crafting raw EVM bytecode. It
 // provides "special" opcodes as drop-in replacements for regular ones, e.g.
 // JUMPDEST labels, PUSH<N> aliases, and DUP/SWAP from the bottom of the stack.
 // It also provides pseudo opcodes that act as compiler hints.
@@ -7,7 +7,7 @@
 // available in the importing package, allowing a mnemonic-style programming
 // environment akin to writing assembly. As a result, there are few top-level
 // identifiers.
-package specialops
+package specops
 
 import (
 	"encoding/binary"
@@ -19,7 +19,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/holiman/uint256"
 
-	"github.com/solidifylabs/specialops/types"
+	"github.com/solidifylabs/specops/types"
 )
 
 // Code is a slice of Bytecoders; it is itself a Bytecoder, allowing for

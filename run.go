@@ -1,4 +1,4 @@
-package specialops
+package specops
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/params"
-	"github.com/solidifylabs/specialops/runopts"
+	"github.com/solidifylabs/specops/runopts"
 )
 
 // Run calls c.Compile() and runs the compiled bytecode on a freshly

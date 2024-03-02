@@ -1,4 +1,4 @@
-package specialops
+package specops
 
 import (
 	"bytes"
@@ -11,7 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/google/go-cmp/cmp"
 	"github.com/holiman/uint256"
-	"github.com/solidifylabs/specialops/types"
+	"github.com/solidifylabs/specops/types"
 )
 
 // mustRunByteCode propagates arguments to runBytecode, calling log.Fatal() on
