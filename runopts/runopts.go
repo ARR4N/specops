@@ -10,6 +10,7 @@ import (
 // to specops.Code.Run(). It is intially set by Run() and then passed to all
 // Options to be modified.
 type Configuration struct {
+	Contract *vm.Contract
 	// vm.NewEVM()
 	BlockCtx    vm.BlockContext
 	TxCtx       vm.TxContext

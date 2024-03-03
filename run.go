@@ -62,7 +62,7 @@ func (c Code) StartDebugging(callData []byte, opts ...runopts.Option) (*runopts.
 }
 
 func runBytecode(compiled, callData []byte, opts ...runopts.Option) ([]byte, error) {
-	cfg, err := newRunConfig(opts...)
+	cfg, err := newRunConfig(compiled, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -74,20 +74,19 @@ func runBytecode(compiled, callData []byte, opts ...runopts.Option) ([]byte, err
 		cfg.VMConfig,
 	).Interpreter()
 
-	cc := &vm.Contract{
-		Code: compiled,
-		Gas:  30e6,
-	}
-
-	out, err := interp.Run(cc, callData, cfg.ReadOnly)
+	out, err := interp.Run(cfg.Contract, callData, cfg.ReadOnly)
 	if err != nil {
 		return nil, fmt.Errorf("%T.Run([%T.Compile()], [callData], readOnly=%t): %w", interp, Code{}, cfg.ReadOnly, err)
 	}
 	return out, nil
 }
 
-func newRunConfig(opts ...runopts.Option) (*runopts.Configuration, error) {
+func newRunConfig(compiled []byte, opts ...runopts.Option) (*runopts.Configuration, error) {
 	cfg := &runopts.Configuration{
+		Contract: &vm.Contract{
+			Code: compiled,
+			Gas:  30e6,
+		},
 		BlockCtx: vm.BlockContext{
 			BlockNumber: big.NewInt(0),
 			Random:      &common.Hash{}, // post merge
