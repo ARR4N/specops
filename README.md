@@ -32,6 +32,8 @@ bytecode unchanged.
 - [ ] Standalone compiler
 - [x] In-process EVM execution (geth)
 - [x] Debugger
+  - [x] Single call frame (via `vm.EVMInterpreter`)
+  - [ ] Multiple call frames; i.e. support `*CALL` methods
   * [x] Stepping
   * [ ] Breakpoints
   * [x] Programmatic inspection (e.g. native Go tests at opcode resolution)

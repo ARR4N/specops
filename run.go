@@ -62,6 +62,23 @@ func (c Code) StartDebugging(callData []byte, opts ...runopts.Option) (*evmdebug
 	}, nil
 }
 
+// RunTerminalDebugger is equivalent to StartDebugging(), but instead of
+// returning the Debugger and results function, it calls
+// Debugger.RunTerminalUI().
+func (c Code) RunTerminalDebugger(callData []byte, opts ...runopts.Option) error {
+	var contract *vm.Contract
+	opts = append(opts, runopts.Func(func(c *runopts.Configuration) error {
+		contract = c.Contract
+		return nil
+	}))
+	dbg, results, err := c.StartDebugging(callData, opts...)
+	if err != nil {
+		return err
+	}
+	defer dbg.FastForward()
+	return dbg.RunTerminalUI(callData, results, contract)
+}
+
 func runBytecode(compiled, callData []byte, opts ...runopts.Option) ([]byte, error) {
 	cfg, err := newRunConfig(compiled, opts...)
 	if err != nil {

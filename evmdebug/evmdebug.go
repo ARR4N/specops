@@ -16,6 +16,8 @@ import (
 // usually in a deferred function.
 //
 // Debugger.State().Err SHOULD be checked once Debugger.Done() returns true.
+//
+// NOTE: see the limitations described in the Debugger comments.
 func NewDebugger() *Debugger {
 	started := make(chan started)
 	step := make(chan step)
@@ -55,6 +57,9 @@ type (
 // A Debugger intercepts EVM opcode execution to allow inspection of the stack,
 // memory, etc. The value returned by its Tracer() method should be placed
 // inside a vm.Config before execution commences.
+//
+// Currently only a single frame is supported (i.e. no *CALL methods). This
+// requires execution with a vm.EVMInterpreter.
 type Debugger struct {
 	d *debugger
 

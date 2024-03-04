@@ -1,4 +1,4 @@
-package specops
+package evmdebug
 
 import (
 	"fmt"
@@ -6,34 +6,30 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-	"github.com/solidifylabs/specops/evmdebug"
-	"github.com/solidifylabs/specops/runopts"
 )
 
-func (c Code) RunTerminalDebugger(callData []byte, opts ...runopts.Option) error {
-	var term termDBG
-	term.initComponents()
-	term.initApp()
-
-	var contract *vm.Contract
-	opts = append(opts, runopts.Func(func(c *runopts.Configuration) error {
-		contract = c.Contract
-		return nil
-	}))
-	dbg, _, err := c.StartDebugging(callData, opts...)
-	if err != nil {
-		return err
+// RunTerminalUI starts a UI that controls the Debugger and displays opcodes,
+// memory, stack etc. Because of the current Debugger limitation of a single
+// call frame, only that exact Contract can be displayed. The callData is
+// assumed to be the same as passed to the execution environment.
+//
+// As the Debugger only has access via a vm.EVMLogger, it can't retrieve the
+// final result. The `results` argument MUST return the returned buffer / error
+// after d.Done() returns true.
+func (d *Debugger) RunTerminalUI(callData []byte, results func() ([]byte, error), contract *vm.Contract) error {
+	t := &termDBG{
+		Debugger: d,
+		results:  results,
 	}
-	defer dbg.FastForward()
-
-	term.Debugger = dbg
-	term.populateCode(contract)
-
-	return term.app.Run()
+	t.initComponents()
+	t.initApp()
+	t.populateCallData(callData)
+	t.populateCode(contract)
+	return t.app.Run()
 }
 
 type termDBG struct {
-	*evmdebug.Debugger
+	*Debugger
 	app *tview.Application
 
 	stack, memory    *tview.List
@@ -41,6 +37,8 @@ type termDBG struct {
 
 	code         *tview.List
 	pcToCodeItem map[uint64]int
+
+	results func() ([]byte, error)
 }
 
 func (*termDBG) styleBox(b *tview.Box, title string) *tview.Box {
@@ -61,6 +59,10 @@ func (t *termDBG) initComponents() {
 			SetSelectedFocusOnly(title != codeTitle)
 		t.styleBox((*l).Box, title)
 	}
+
+	t.code.SetChangedFunc(func(int, string, string, rune) {
+		t.onStep()
+	})
 
 	for title, v := range map[string]**tview.TextView{
 		"calldata": &t.callData,
@@ -100,6 +102,10 @@ func (t *termDBG) createLayout() tview.Primitive {
 	return root
 }
 
+func (t *termDBG) populateCallData(cd []byte) {
+	t.callData.SetText(fmt.Sprintf("%x", cd))
+}
+
 func (t *termDBG) populateCode(c *vm.Contract) {
 	t.pcToCodeItem = make(map[uint64]int)
 
@@ -132,6 +138,22 @@ func (t *termDBG) populateCode(c *vm.Contract) {
 
 func (t *termDBG) highlightPC() {
 	t.code.SetCurrentItem(t.pcToCodeItem[t.State().PC] + 1)
+}
+
+// onStep is triggered by t.code's ChangedFunc.
+func (t *termDBG) onStep() {
+	if !t.Done() {
+		return
+	}
+	t.result.SetText(t.resultToDisplay())
+}
+
+func (t *termDBG) resultToDisplay() string {
+	out, err := t.results()
+	if err != nil {
+		return fmt.Sprintf("ERROR: %v", err)
+	}
+	return fmt.Sprintf("%x", out)
 }
 
 func (t *termDBG) inputCapture(ev *tcell.EventKey) *tcell.EventKey {

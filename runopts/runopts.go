@@ -53,7 +53,7 @@ func WithDebugger(dbg *evmdebug.Debugger) Option {
 	})
 }
 
-// WithNewDebugger() is a convenience function for constructing a new Debugger,
+// WithNewDebugger is a convenience function for constructing a new Debugger,
 // passing it to WithDebugger(), and returning both the Debugger and the Option.
 func WithNewDebugger() (*evmdebug.Debugger, Option) {
 	d := evmdebug.NewDebugger()
