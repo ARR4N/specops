@@ -7,6 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/params"
+	"github.com/solidifylabs/specops/evmdebug"
 	"github.com/solidifylabs/specops/runopts"
 )
 
@@ -34,14 +35,14 @@ func (c Code) Run(callData []byte, opts ...runopts.Option) ([]byte, error) {
 // errors are returned by a call to the returned function. Said execution errors
 // can be errors.Unwrap()d to access the same error available in
 // `dbg.State().Err`.
-func (c Code) StartDebugging(callData []byte, opts ...runopts.Option) (*runopts.Debugger, func() ([]byte, error), error) {
+func (c Code) StartDebugging(callData []byte, opts ...runopts.Option) (*evmdebug.Debugger, func() ([]byte, error), error) {
 	compiled, err := c.Compile()
 	if err != nil {
 		return nil, nil, fmt.Errorf("%T.Compile(): %v", c, err)
 	}
 
-	dbg := runopts.NewDebugger()
-	opts = append(opts, dbg)
+	dbg, opt := runopts.WithNewDebugger()
+	opts = append(opts, opt)
 
 	var (
 		result []byte

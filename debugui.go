@@ -6,6 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"github.com/solidifylabs/specops/evmdebug"
 	"github.com/solidifylabs/specops/runopts"
 )
 
@@ -32,7 +33,7 @@ func (c Code) RunTerminalDebugger(callData []byte, opts ...runopts.Option) error
 }
 
 type termDBG struct {
-	*runopts.Debugger
+	*evmdebug.Debugger
 	app *tview.Application
 
 	stack, memory    *tview.List
