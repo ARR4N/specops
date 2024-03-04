@@ -1,4 +1,7 @@
-package runopts
+// Package evmdebug provides debugging mechanisms for EVM contracts,
+// intercepting opcode-level execution and allowing for inspection of data such
+// as the VM's stack and memory.
+package evmdebug
 
 import (
 	"sync"
@@ -13,6 +16,8 @@ import (
 // usually in a deferred function.
 //
 // Debugger.State().Err SHOULD be checked once Debugger.Done() returns true.
+//
+// NOTE: see the limitations described in the Debugger comments.
 func NewDebugger() *Debugger {
 	started := make(chan started)
 	step := make(chan step)
@@ -49,8 +54,12 @@ type (
 	done        struct{}
 )
 
-// A Debugger is an Option that intercepts opcode execution to allow inspection
-// of the stack, memory, etc.
+// A Debugger intercepts EVM opcode execution to allow inspection of the stack,
+// memory, etc. The value returned by its Tracer() method should be placed
+// inside a vm.Config before execution commences.
+//
+// Currently only a single frame is supported (i.e. no *CALL methods). This
+// requires execution with a vm.EVMInterpreter.
 type Debugger struct {
 	d *debugger
 
@@ -63,11 +72,11 @@ type Debugger struct {
 	done    <-chan done
 }
 
-// Apply adds a VMConfig.Tracer to the Configuration, intercepting execution of
-// every opcode.
-func (d *Debugger) Apply(c *Configuration) error {
-	c.VMConfig.Tracer = d.d
-	return nil
+// Tracer returns an EVMLogger that enables debugging, compatible with geth.
+//
+// TODO: add an example demonstrating how to access vm.Config.
+func (d *Debugger) Tracer() vm.EVMLogger {
+	return d.d
 }
 
 // Wait blocks until the bytecode is ready for execution, but the first opcode

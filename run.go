@@ -7,6 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/params"
+	"github.com/solidifylabs/specops/evmdebug"
 	"github.com/solidifylabs/specops/runopts"
 )
 
@@ -34,14 +35,14 @@ func (c Code) Run(callData []byte, opts ...runopts.Option) ([]byte, error) {
 // errors are returned by a call to the returned function. Said execution errors
 // can be errors.Unwrap()d to access the same error available in
 // `dbg.State().Err`.
-func (c Code) StartDebugging(callData []byte, opts ...runopts.Option) (*runopts.Debugger, func() ([]byte, error), error) {
+func (c Code) StartDebugging(callData []byte, opts ...runopts.Option) (*evmdebug.Debugger, func() ([]byte, error), error) {
 	compiled, err := c.Compile()
 	if err != nil {
 		return nil, nil, fmt.Errorf("%T.Compile(): %v", c, err)
 	}
 
-	dbg := runopts.NewDebugger()
-	opts = append(opts, dbg)
+	dbg, opt := runopts.WithNewDebugger()
+	opts = append(opts, opt)
 
 	var (
 		result []byte
@@ -61,8 +62,25 @@ func (c Code) StartDebugging(callData []byte, opts ...runopts.Option) (*runopts.
 	}, nil
 }
 
+// RunTerminalDebugger is equivalent to StartDebugging(), but instead of
+// returning the Debugger and results function, it calls
+// Debugger.RunTerminalUI().
+func (c Code) RunTerminalDebugger(callData []byte, opts ...runopts.Option) error {
+	var contract *vm.Contract
+	opts = append(opts, runopts.Func(func(c *runopts.Configuration) error {
+		contract = c.Contract
+		return nil
+	}))
+	dbg, results, err := c.StartDebugging(callData, opts...)
+	if err != nil {
+		return err
+	}
+	defer dbg.FastForward()
+	return dbg.RunTerminalUI(callData, results, contract)
+}
+
 func runBytecode(compiled, callData []byte, opts ...runopts.Option) ([]byte, error) {
-	cfg, err := newRunConfig(opts...)
+	cfg, err := newRunConfig(compiled, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -74,20 +92,19 @@ func runBytecode(compiled, callData []byte, opts ...runopts.Option) ([]byte, err
 		cfg.VMConfig,
 	).Interpreter()
 
-	cc := &vm.Contract{
-		Code: compiled,
-		Gas:  30e6,
-	}
-
-	out, err := interp.Run(cc, callData, cfg.ReadOnly)
+	out, err := interp.Run(cfg.Contract, callData, cfg.ReadOnly)
 	if err != nil {
 		return nil, fmt.Errorf("%T.Run([%T.Compile()], [callData], readOnly=%t): %w", interp, Code{}, cfg.ReadOnly, err)
 	}
 	return out, nil
 }
 
-func newRunConfig(opts ...runopts.Option) (*runopts.Configuration, error) {
+func newRunConfig(compiled []byte, opts ...runopts.Option) (*runopts.Configuration, error) {
 	cfg := &runopts.Configuration{
+		Contract: &vm.Contract{
+			Code: compiled,
+			Gas:  30e6,
+		},
 		BlockCtx: vm.BlockContext{
 			BlockNumber: big.NewInt(0),
 			Random:      &common.Hash{}, // post merge

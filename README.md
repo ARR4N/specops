@@ -32,12 +32,14 @@ bytecode unchanged.
 - [ ] Standalone compiler
 - [x] In-process EVM execution (geth)
 - [x] Debugger
+  - [x] Single call frame (via `vm.EVMInterpreter`)
+  - [ ] Multiple call frames; i.e. support `*CALL` methods
   * [x] Stepping
   * [ ] Breakpoints
   * [x] Programmatic inspection (e.g. native Go tests at opcode resolution)
     * [x] Memory
     * [x] Stack
-  * [ ] User interface
+  * [x] User interface
 - [ ] Source mapping
 - [ ] Coverage analysis
 - [ ] Fork testing with RPC URL
@@ -81,6 +83,9 @@ result, err := code.Run(nil /*callData*/ /*, [runopts.Options]...*/)
 // ...
 
 // ----- DEBUG (Programmatic) -----
+//
+// ***** See below for the debugger's terminal UI *****
+//
 
 dbg, results := code.StartDebugging(nil /*callData*/ /*, Options...*/)
 defer dbg.FastForward() // best practice to avoid resource leaks
@@ -103,6 +108,10 @@ result, err := results()
   * 0age/metamorphic ([original](https://github.com/0age/metamorphic/blob/55adac1d2487046002fc33a5dff7d669b5419a3a/contracts/MetamorphicContractFactory.sol#L55))
 - [Monte Carlo approximation of pi](https://github.com/solidifylabs/specops/blob/41efe932c9a85e45ce705b231577447e6c944487/examples_test.go#L158)
 - [`sqrt()`](https://github.com/solidifylabs/specops/blob/41efe932c9a85e45ce705b231577447e6c944487/examples_test.go#L246) as seen ~~on TV~~ in `prb-math` ([original](https://github.com/PaulRBerg/prb-math/blob/5b6279a0cf7c1b1b6a5cc96082811f7ef620cf60/src/Common.sol#L595))
+
+### Debugger
+
+![image](https://github.com/solidifylabs/specops/assets/519948/5057ad0f-bb6f-438b-a295-8b1f410d2330)
 
 ## Acknowledgements
 

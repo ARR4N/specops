@@ -4,12 +4,14 @@ package runopts
 import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/params"
+	"github.com/solidifylabs/specops/evmdebug"
 )
 
 // A Configuration carries all values that can be modified to configure a call
 // to specops.Code.Run(). It is intially set by Run() and then passed to all
 // Options to be modified.
 type Configuration struct {
+	Contract *vm.Contract
 	// vm.NewEVM()
 	BlockCtx    vm.BlockContext
 	TxCtx       vm.TxContext
@@ -40,4 +42,20 @@ func ReadOnly() Option {
 		c.ReadOnly = true
 		return nil
 	})
+}
+
+// WithDebugger returns an Option that sets Configuration.VMConfig.Tracer to
+// dbg.Tracer(), intercepting every opcode execution. See evmdebug for details.
+func WithDebugger(dbg *evmdebug.Debugger) Option {
+	return Func(func(c *Configuration) error {
+		c.VMConfig.Tracer = dbg.Tracer()
+		return nil
+	})
+}
+
+// WithNewDebugger is a convenience function for constructing a new Debugger,
+// passing it to WithDebugger(), and returning both the Debugger and the Option.
+func WithNewDebugger() (*evmdebug.Debugger, Option) {
+	d := evmdebug.NewDebugger()
+	return d, WithDebugger(d)
 }
