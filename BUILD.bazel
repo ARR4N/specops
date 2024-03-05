@@ -1,0 +1,56 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+load("@gazelle//:def.bzl", "gazelle")
+
+# No need for gazelle:prefix as it reads from go.mod
+gazelle(
+    name = "gazelle",
+    command = "fix",
+)
+
+gazelle(
+    name = "gazelle_diff",
+    command = "fix",
+    extra_args = ["--mode=diff"],
+)
+
+go_library(
+    name = "specops",
+    srcs = [
+        "compile.go",
+        "opcodes.gen.go",
+        "run.go",
+        "specops.go",
+        "stack.go",
+    ],
+    importpath = "github.com/solidifylabs/specops",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//evmdebug",
+        "//runopts",
+        "//stack",
+        "//types",
+        "@com_github_ethereum_go_ethereum//common",
+        "@com_github_ethereum_go_ethereum//core/vm",
+        "@com_github_ethereum_go_ethereum//crypto",
+        "@com_github_ethereum_go_ethereum//params",
+        "@com_github_holiman_uint256//:uint256",
+    ],
+)
+
+go_test(
+    name = "specops_test",
+    srcs = [
+        "examples_test.go",
+        "specops_test.go",
+    ],
+    embed = [":specops"],
+    deps = [
+        "//stack",
+        "//types",
+        "@com_github_ethereum_go_ethereum//common",
+        "@com_github_ethereum_go_ethereum//core/vm",
+        "@com_github_ethereum_go_ethereum//crypto",
+        "@com_github_google_go_cmp//cmp",
+        "@com_github_holiman_uint256//:uint256",
+    ],
+)

@@ -1,0 +1,16 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "evmdebug",
+    srcs = [
+        "evmdebug.go",
+        "ui.go",
+    ],
+    importpath = "github.com/solidifylabs/specops/evmdebug",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_ethereum_go_ethereum//core/vm",
+        "@com_github_gdamore_tcell_v2//:tcell",
+        "@com_github_rivo_tview//:tview",
+    ],
+)

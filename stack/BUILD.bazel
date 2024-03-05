@@ -1,0 +1,8 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "stack",
+    srcs = ["stack.go"],
+    importpath = "github.com/solidifylabs/specops/stack",
+    visibility = ["//visibility:public"],
+)
