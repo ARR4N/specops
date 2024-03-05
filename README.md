@@ -18,6 +18,10 @@ converting them to
 equivalents, while others are simply compiler hints that leave the resulting
 bytecode unchanged.
 
+## Getting started
+
+See the [`getting-started`](https://github.com/solidifylabs/specops/tree/main/getting-started) directory for creating your first SpecOps code. Also check out the [examples](#other-examples) and the [documentation](#documentation).
+
 ## Features
 
 - [x] `JUMPDEST` labels (absolute)
