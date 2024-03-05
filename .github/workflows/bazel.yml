@@ -1,0 +1,48 @@
+name: Bazel
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [ main ]
+  push: 
+    branches: [ main ]
+
+jobs:
+  bazel:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Bazel
+      uses: bazelbuild/setup-bazelisk@v3
+
+    - name: Restore cache
+      id: restore-cache
+      uses: actions/cache@v4
+      with:
+        path: "~/.cache/bazel"
+        key: bazel-${{ hashFiles('**/BUILD.bazel', '**/*.bzl', 'WORKSPACE', 'MODULE.bazel.lock') }}
+        restore-keys: bazel-
+
+    - name: Check BUILD files
+      run: |
+        bazel run //:gazelle_diff
+
+    - name: Build
+      run: |
+        bazel build //...
+
+    - name: Test
+      run: |
+        bazel test --test_output=errors //...
+
+    - name: Save cache
+      # Only on merge to main and if previously missed
+      if: |
+        github.ref == 'refs/heads/main' &&
+        github.event_name != 'pull_request' &&
+        steps.restore-cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v3
+      with:
+        path: "~/.cache/bazel"
+        key: ${{ steps.restore-cache.outputs.cache-primary-key }}

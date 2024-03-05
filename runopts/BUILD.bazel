@@ -1,0 +1,23 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "runopts",
+    srcs = ["runopts.go"],
+    importpath = "github.com/solidifylabs/specops/runopts",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//evmdebug",
+        "@com_github_ethereum_go_ethereum//core/vm",
+        "@com_github_ethereum_go_ethereum//params",
+    ],
+)
+
+go_test(
+    name = "runopts_test",
+    srcs = ["debugger_test.go"],
+    deps = [
+        "//:specops",
+        "//stack",
+        "@com_github_ethereum_go_ethereum//core/vm",
+    ],
+)

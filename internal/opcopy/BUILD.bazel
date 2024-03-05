@@ -1,0 +1,18 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "opcopy_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/solidifylabs/specops/internal/opcopy",
+    visibility = ["//visibility:private"],
+    deps = [
+        "@com_github_ethereum_go_ethereum//core/vm",
+        "@com_github_ethereum_go_ethereum//params",
+    ],
+)
+
+go_binary(
+    name = "opcopy",
+    embed = [":opcopy_lib"],
+    visibility = ["//:__subpackages__"],
+)

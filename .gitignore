@@ -7,3 +7,6 @@ experimental/**
 # Coverage
 cover.out
 lcov.info
+
+# Build system
+bazel-*
