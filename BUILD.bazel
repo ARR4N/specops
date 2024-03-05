@@ -1,5 +1,6 @@
 load("@rules_go//go:def.bzl", "go_library", "go_test")
 load("@gazelle//:def.bzl", "gazelle")
+load("@aspect_bazel_lib//lib:write_source_files.bzl", "write_source_files")
 
 # No need for gazelle:prefix as it reads from go.mod
 gazelle(
@@ -17,7 +18,7 @@ go_library(
     name = "specops",
     srcs = [
         "compile.go",
-        "opcodes.gen.go",
+        "opcodes.gen.bazel.go",  # keep
         "run.go",
         "specops.go",
         "stack.go",
@@ -53,4 +54,26 @@ go_test(
         "@com_github_google_go_cmp//cmp",
         "@com_github_holiman_uint256//:uint256",
     ],
+)
+
+genrule(
+    name = "gen_opcodes",
+    outs = ["opcodes.gen.bazel.go"],
+    cmd = "$(location //internal/opcopy) > $@",
+    tools = ["//internal/opcopy"],
+    visibility = ["//visibility:private"],
+)
+
+# Provide a concrete version of the generated file for compatibility with
+# regular Go tooling.
+#
+# The go_library(), however, directly depends on the genrule() so we don't have
+# to run the write() every time //internal/opcopy is updated.
+#
+# gazelle:exclude opcodes.gen.go
+write_source_files(
+    name = "write_gen_opcodes",
+    files = {
+        "opcodes.gen.go": ":gen_opcodes",
+    },
 )

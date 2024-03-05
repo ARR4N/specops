@@ -2,7 +2,10 @@
 
 module(
     name = "solidifylabs_specops",
+    version = "0.0.0",
 )
+
+bazel_dep(name = "aspect_bazel_lib", version = "2.5.1")
 
 bazel_dep(name = "rules_go", version = "0.46.0")
 bazel_dep(name = "gazelle", version = "0.35.0")
