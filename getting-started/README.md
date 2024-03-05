@@ -1,7 +1,7 @@
 # Getting started with SpecOps
 
 1. [Install Go](https://go.dev/doc/install)
-2. Clone this repo:
+2. Clone the SpecOps repo:
 
 ```shell
 git clone https://github.com/solidifylabs/specops.git
@@ -13,7 +13,7 @@ git clone https://github.com/solidifylabs/specops.git
 go run getting-started.spec.go compile
 ```
 
-This will print the compiled EVM bytecode to `stdout`.
+This will print the compiled EVM bytecode to `stdout`. The first time you run it you may see some logs about fetching dependencies, but from then on it will only output the compiled contract.
 
 ## Development
 
