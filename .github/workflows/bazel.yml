@@ -18,10 +18,17 @@ jobs:
 
     - name: Restore cache
       id: restore-cache
-      uses: actions/cache@v4
+      uses: actions/cache/restore@v3
       with:
         path: "~/.cache/bazel"
-        key: bazel-${{ hashFiles('**/BUILD.bazel', '**/*.bzl', 'WORKSPACE', 'MODULE.bazel.lock') }}
+        key: bazel-${{ hashFiles(
+            '**/*.go',
+            'go.sum',
+            'MODULE.bazel.lock',
+            '**/BUILD.bazel',
+            '**/*.bzl',
+            'WORKSPACE'
+          ) }}
         restore-keys: bazel-
 
     - name: Check BUILD files
