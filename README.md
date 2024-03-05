@@ -64,11 +64,7 @@ functionality.
 
 ### Hello world
 
-TODO: link to Go playground; for now, here's the [real implementation](https://github.com/solidifylabs/specops/blob/41efe932c9a85e45ce705b231577447e6c944487/examples_test.go#L12).
-
-The `specops` Go package has a minimal footprint to allow for dot-importing,
-making all exported symbols available. TODO: expand on the implications,
-rationale, and recommendations as this goes against the style guide.
+To run this example `Code` block with the SpecOps CLI, see the `getting-started/` directory.
 
 ```go
 import . github.com/solidifylabs/specops
