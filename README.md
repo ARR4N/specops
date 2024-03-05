@@ -1,6 +1,6 @@
 # SpecOps [![Go](https://github.com/solidifylabs/specops/actions/workflows/go.yml/badge.svg)](https://github.com/solidifylabs/specops/actions/workflows/go.yml) [![Go Reference](https://pkg.go.dev/badge/github.com/solidifylabs/specops.svg)](https://pkg.go.dev/github.com/solidifylabs/specops)
 
-> `specops` is a low-level, domain-specific language (and compiler) for crafting [Ethereum VM](https://ethereum.org/en/developers/docs/evm) bytecode in Go.
+> `specops` is a low-level, domain-specific language (and compiler) for crafting [Ethereum VM](https://ethereum.org/en/developers/docs/evm) bytecode.
 
 This is a _very_ early release. In fact, it's just a weekend project gone rogue
 so is less than a week old.

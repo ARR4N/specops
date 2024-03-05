@@ -48,3 +48,5 @@ go run getting-started.spec.go debug --calldata decafc0ffeebad
 * `<end>` Fast-forward to the end of execution
 * `<Esc>` or `q` Once execution has ended, quit
 * `Ctrl+C` At any time, quit
+
+![image](https://github.com/solidifylabs/specops/assets/519948/5057ad0f-bb6f-438b-a295-8b1f410d2330)
