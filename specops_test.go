@@ -11,6 +11,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/google/go-cmp/cmp"
 	"github.com/holiman/uint256"
+
+	"github.com/solidifylabs/specops/stack"
 	"github.com/solidifylabs/specops/types"
 )
 
@@ -35,9 +37,9 @@ func TestRunCompiled(t *testing.T) {
 		// A separate Fn() moves us out of "function mode". Note that if we
 		// didn't need <cds-1> to stay on the stack we could elide DUP1 and have
 		// the result(s) of the last Fn() act as the inputs to this one. The
-		// ExpectStackDepth(1) inside a Fn() asserts the incoming "piped" stack
+		// stack.ExpectDepth(1) inside a Fn() asserts the incoming "piped" stack
 		// size and is equivalent to being placed between the two Fn()s.
-		Fn(CALLDATACOPY, PUSH0, PUSH(1), DUP1, ExpectStackDepth(1)), // <cds-1> {cds[1:]}
+		Fn(CALLDATACOPY, PUSH0, PUSH(1), DUP1, stack.ExpectDepth(1)), // <cds-1> {cds[1:]}
 
 		Fn(SHR, PUSH(248), Fn(CALLDATALOAD, PUSH0)), // <cds-1, hash?> {cds[1:]}
 		Fn(JUMPI, PUSHJUMPDEST("hash")),             // <cds-1> {cds[1:]}
@@ -45,11 +47,11 @@ func TestRunCompiled(t *testing.T) {
 		// Placing the return code here is unnecessarily convoluted, but acts to
 		// demonstrate backwards jumping from the end of the hashing code.
 		JUMPDEST("return"), // expecting <size> {ret}
-		SetStackDepth(1),
+		stack.SetDepth(1),
 		Fn(RETURN, PUSH0),
 
 		JUMPDEST("hash"), // <cds-1> {cds[1:]}
-		SetStackDepth(1),
+		stack.SetDepth(1),
 		// Nesting Fn()s provides even greater improvements to readability than
 		// chaining does. The next block is equivalent to the more complicated:
 		//
@@ -268,8 +270,8 @@ func TestNoCallBytecode(t *testing.T) {
 		Code{},
 		JUMPDEST(""),
 		PUSHJUMPDEST(""),
-		ExpectStackDepth(0),
-		SetStackDepth(0),
+		stack.ExpectDepth(0),
+		stack.SetDepth(0),
 		Inverted(0),
 	} {
 		if _, err := b.Bytecode(); err == nil {

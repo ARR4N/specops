@@ -6,6 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/core/vm"
 
+	"github.com/solidifylabs/specops/stack"
 	"github.com/solidifylabs/specops/types"
 )
 
@@ -96,12 +97,12 @@ CodeLoop:
 		}
 
 		switch op := raw.(type) {
-		case SetStackDepth:
+		case stack.SetDepth:
 			stackDepth = uint(op)
 			requireStackDepthSetting = false
 			continue CodeLoop
 
-		case ExpectStackDepth:
+		case stack.ExpectDepth:
 			if got, want := stackDepth, uint(op); got != want {
 				return nil, posErr("stack depth %d when expecting %d", got, want)
 			}
@@ -143,7 +144,7 @@ CodeLoop:
 		} // end switch raw.(type)
 
 		if requireStackDepthSetting {
-			return nil, posErr("%T must be followed by %T", JUMPDEST(""), SetStackDepth(0))
+			return nil, posErr("%T must be followed by %T", JUMPDEST(""), stack.SetDepth(0))
 		}
 
 		switch raw.(type) {
