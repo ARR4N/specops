@@ -9,6 +9,9 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/core/vm"
+
+	"github.com/solidifylabs/specops/stack"
+
 	. "github.com/solidifylabs/specops"
 )
 
@@ -77,7 +80,7 @@ func TestDebugger(t *testing.T) {
 
 func TestDebuggerCompilationError(t *testing.T) {
 	code := Code{
-		ExpectStackDepth(5),
+		stack.ExpectDepth(5),
 	}
 	if _, _, err := code.StartDebugging(nil); err == nil || !strings.Contains(err.Error(), "Compile()") {
 		t.Errorf("%T.StartDebugging(nil) with known compilation failure got err %v; want containing %q", code, err, "Compile()")
@@ -99,14 +102,14 @@ func TestDebuggerErrors(t *testing.T) {
 		{
 			name: "immediate underflow",
 			code: Code{
-				SetStackDepth(2), RETURN, // compiles to {RETURN}
+				stack.SetDepth(2), RETURN, // compiles to {RETURN}
 			},
 			wantErrType: reflect.TypeOf(new(vm.ErrStackUnderflow)),
 		},
 		{
 			name: "delayed underflow",
 			code: Code{
-				PUSH0, SetStackDepth(2), RETURN, // compiles to {PUSH0, RETURN}
+				PUSH0, stack.SetDepth(2), RETURN, // compiles to {PUSH0, RETURN}
 			},
 			wantErrType: reflect.TypeOf(new(vm.ErrStackUnderflow)),
 		},

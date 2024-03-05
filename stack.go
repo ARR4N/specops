@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/core/vm"
-	"github.com/solidifylabs/specops/stack"
 )
 
 // A stackDelta carries the number of values popped and pushed by an opcode.
@@ -12,11 +11,6 @@ import (
 type stackDelta struct {
 	pop, push uint
 }
-
-type (
-	ExpectStackDepth = stack.ExpectDepth
-	SetStackDepth    = stack.SetDepth
-)
 
 // Inverted applies DUP<X> and SWAP<X> opcodes relative to the bottom-most value
 // on the stack unless there are more than 16 values, in which case they are
@@ -32,8 +26,8 @@ type (
 // be offset by one (like regular SWAPs) this is less intuitive than
 // `Inverted(SWAP1)` being the bottom of a (sub-16-depth) stack.
 //
-// See SetStackDepth() for caveats. It is best practice to use `Inverted` in
-// conjunction with {Set/Expect}StackDepth().
+// See stack.SetDepth() for caveats. It is best practice to use `Inverted` in
+// conjunction with stack.{Set/Expect}Depth().
 type Inverted vm.OpCode
 
 // Bytecode always returns an error.

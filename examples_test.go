@@ -7,6 +7,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/holiman/uint256"
+
+	"github.com/solidifylabs/specops/stack"
 )
 
 func Example_helloWorld() {
@@ -51,21 +53,21 @@ func ExampleCode_wellKnown() {
 			PUSH(impl), // Native Go values!
 			RETURNDATASIZE, CALLDATASIZE, RETURNDATASIZE, RETURNDATASIZE,
 		),
-		ExpectStackDepth(2), // top <suc 0> bot
+		stack.ExpectDepth(2), // top <suc 0> bot
 		Fn(
 			RETURNDATACOPY,
 			DUP1,           // This could equivalently be Inverted(DUP1)==DUP4
 			Inverted(DUP1), // DUP the 0 at the bottom; the compiler knows to convert this to DUP3
 			RETURNDATASIZE, // Actually return-data size now
 		),
-		ExpectStackDepth(2),          // <suc 0>
+		stack.ExpectDepth(2),         // <suc 0>
 		SWAP1, RETURNDATASIZE, SWAP2, // <suc 0 rds>
 
 		Fn(JUMPI, PUSH("return")),
-		Fn(REVERT, ExpectStackDepth(2)), // Compiler hint for argc
+		Fn(REVERT, stack.ExpectDepth(2)), // Compiler hint for argc
 
 		JUMPDEST("return"),
-		SetStackDepth(2), // Required after a JUMPDEST
+		stack.SetDepth(2), // Required after a JUMPDEST
 		RETURN,
 	}
 
@@ -103,9 +105,9 @@ func ExampleCode_wellKnown() {
 		// signals the reader of the code to remember the earlier
 		// setup), while placing it in Fn() makes the order more
 		// readable.
-		Fn(ISZERO, Fn(STATICCALL, ExpectStackDepth(7))),
+		Fn(ISZERO, Fn(STATICCALL, stack.ExpectDepth(7))),
 		// Recall that the return (offset, size) were set to (0,32).
-		ExpectStackDepth(2), // [0, fail?] memory:<addr>
+		stack.ExpectDepth(2), // [0, fail?] memory:<addr>
 
 		Fn(MLOAD, Inverted(DUP1) /*0*/), // [0, fail?, addr]
 		Fn(EXTCODESIZE, DUP1),           // DUP1 as a single argument is like a stack peek
@@ -119,18 +121,18 @@ func ExampleCode_wellKnown() {
 	eip1167Modern := Code{
 		Fn(CALLDATACOPY, PUSH0, PUSH0, CALLDATASIZE),
 		Fn(DELEGATECALL, GAS, PUSH(impl), PUSH0, CALLDATASIZE, PUSH0, PUSH0),
-		ExpectStackDepth(1), // `success`
+		stack.ExpectDepth(1), // `success`
 		Fn(RETURNDATACOPY, PUSH0, PUSH0, RETURNDATASIZE),
 
-		ExpectStackDepth(1),   // unchanged
+		stack.ExpectDepth(1),  // unchanged
 		PUSH0, RETURNDATASIZE, // prepare for the REVERT/RETURN; these are in "human" order because of the next SWAP
 		Inverted(SWAP1), // bring `success` from the bottom
 		Fn(JUMPI, PUSH("return")),
 
-		Fn(REVERT, ExpectStackDepth(2)),
+		Fn(REVERT, stack.ExpectDepth(2)),
 
 		JUMPDEST("return"),
-		Fn(RETURN, SetStackDepth(2)),
+		Fn(RETURN, stack.SetDepth(2)),
 	}
 
 	for _, eg := range []struct {
@@ -192,9 +194,9 @@ func ExampleCode_monteCarloPi() {
 		PUSH(1),                                // constant-value 1
 		Fn(SUB, Fn(SHL, PUSH(0x80), One), One), // 128-bit mask
 		Fn(SUB, Fn(SHL, PUSH(0x40), One), One), // 64-bit mask
-		ExpectStackDepth(6),
+		stack.ExpectDepth(6),
 
-		JUMPDEST("loop"), SetStackDepth(6),
+		JUMPDEST("loop"), stack.SetDepth(6),
 
 		Fn(KECCAK256, PUSH0, PUSH(32)),
 
@@ -216,13 +218,13 @@ func ExampleCode_monteCarloPi() {
 			PUSH("return"),
 			Fn(ISZERO, DUP1, Fn(SUB, Limit, One)), // DUP1 uses the top of the stack without consuming it
 		),
-		ExpectStackDepth(9),
+		stack.ExpectDepth(9),
 
 		SwapLimit, POP, POP,
 		Fn(MSTORE, PUSH0),
-		Fn(JUMP, PUSH("loop")), ExpectStackDepth(6),
+		Fn(JUMP, PUSH("loop")), stack.ExpectDepth(6),
 
-		JUMPDEST("return"), SetStackDepth(9),
+		JUMPDEST("return"), stack.SetDepth(9),
 		POP, POP,
 		Fn(MSTORE,
 			PUSH0,
@@ -268,11 +270,11 @@ func ExampleCode_sqrt() {
 		SetBranch
 	)
 
-	// Placing ExpectStackDepth(i/o) at the beginning/end of a Code
+	// Placing stack.ExpectDepth(i/o) at the beginning/end of a Code
 	// effectively turns it into a macro that can either be embedded in another
 	// Code (as below) or for use in Solidity `verbatim_Xi_Yo`.
 	approx := Code{
-		ExpectStackDepth(6),
+		stack.ExpectDepth(6),
 		// Original:
 		//
 		// if (xAux >= 2 ** 128) {
@@ -307,12 +309,12 @@ func ExampleCode_sqrt() {
 		), POP,
 
 		POP, // Branch
-		ExpectStackDepth(6),
+		stack.ExpectDepth(6),
 	}
 
 	// Single round of Newton–Raphson
 	newton := Code{
-		ExpectStackDepth(6),
+		stack.ExpectDepth(6),
 		// Original: result = (result + x / result) >> 1;
 		Fn(SetResult,
 			Fn(SHR,
@@ -323,20 +325,20 @@ func ExampleCode_sqrt() {
 				),
 			),
 		), POP,
-		ExpectStackDepth(6),
+		stack.ExpectDepth(6),
 	}
 
 	sqrt := Code{
-		ExpectStackDepth(1), // Input
-		PUSH(1),             // One
-		PUSH(128),           // ThresholdBits
+		stack.ExpectDepth(1), // Input
+		PUSH(1),              // One
+		PUSH(128),            // ThresholdBits
 		Fn(SUB, Fn(SHL, ThresholdBits, One), One), // Threshold
 		Input, // xAux := Input
 		One,   // Result
-		ExpectStackDepth(6),
+		stack.ExpectDepth(6),
 
 		approx, approx, approx, approx, approx, approx, approx,
-		ExpectStackDepth(6),
+		stack.ExpectDepth(6),
 		newton, newton, newton, newton, newton, newton, newton,
 	}
 
