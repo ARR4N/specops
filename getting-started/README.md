@@ -42,13 +42,13 @@ will provide more information about each (for now, quite limited).
 
 ### calldata
 
-Both the `exec` and `debug` commands support the `--calldata` flag, which accepts hex-encoded calldata. For example:
+Both the `exec` and `debug` commands support the `--calldata` flag, which accepts hex-encoded calldata (*without* the `0x` prefix). For example:
 
 ```shell
 go run getting-started.spec.go debug --calldata decafc0ffeebad
 ```
 
-### Debugging
+### Debugger
 
 * `<space>` Step to next instruction
 * `<end>` Fast-forward to the end of execution

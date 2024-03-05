@@ -117,6 +117,8 @@ result, err := results()
 
 ### Debugger
 
+Key bindings are described in the `getting-started/` README.
+
 ![image](https://github.com/solidifylabs/specops/assets/519948/5057ad0f-bb6f-438b-a295-8b1f410d2330)
 
 ## Acknowledgements
