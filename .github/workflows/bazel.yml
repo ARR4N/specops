@@ -1,0 +1,29 @@
+name: Bazel
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [ main ]
+  push: 
+    branches: [ main ]
+
+jobs:
+  bazel:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Bazel
+      uses: bazelbuild/setup-bazelisk@v3
+
+    - name: Check BUILD files
+      run: |
+        bazel run //:gazelle_diff
+
+    - name: Build
+      run: |
+        bazel build //...
+
+    - name: Test
+      run: |
+        bazel test --test_output=errors //...
