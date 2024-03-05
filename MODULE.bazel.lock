@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 3,
-  "moduleFileHash": "e13f4929db974ca782b3cc559f9c2027bb3aca9475499136068c9a8aafdbd45b",
+  "moduleFileHash": "934badda68f6775a528d875e579a163efbb5ffb0d9a57bd010d2d7383cfb5bdb",
   "flags": {
     "cmdRegistries": [
       "https://bcr.bazel.build/"
@@ -66,7 +66,8 @@
             "com_github_gdamore_tcell_v2": "com_github_gdamore_tcell_v2",
             "com_github_google_go_cmp": "com_github_google_go_cmp",
             "com_github_holiman_uint256": "com_github_holiman_uint256",
-            "com_github_rivo_tview": "com_github_rivo_tview"
+            "com_github_rivo_tview": "com_github_rivo_tview",
+            "com_github_spf13_cobra": "com_github_spf13_cobra"
           },
           "devImports": [],
           "tags": [
@@ -93,7 +94,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 28,
+                "line": 29,
                 "column": 24
               }
             }
@@ -1766,15 +1767,31 @@
       "general": {
         "bzlTransitiveDigest": "zP01muRk4s4xWGK3gNPXOyDMQkOPsIhu99akeKWFFQ0=",
         "accumulatedFileDigests": {
-          "@@//:go.mod": "0ab50fb743ca6ad919f04de80d574dff5587838570b7257931fb77fc39f5701e",
+          "@@//:go.mod": "24d9fa82d505583d79f519591df0d1044ae8d673ddfe513d508c2590ce7e8b93",
           "@@rules_go~0.46.0//:go.sum": "d56fdb19b21a5f12bcf625c49432371ac39c2def0f564098fbda107f7c080f40",
-          "@@//:go.sum": "dc2fdefccff75ed1b2e2714a1482d4fedf94155c427924cf7b37075ea73c8e25",
+          "@@//:go.sum": "3157b5026f950dcfde720d9f2bc5a2103e85df0733c220a25aa91f49d265a667",
           "@@gazelle~0.35.0//:go.mod": "48dc6e771c3028ee1c18b9ffc81e596fd5f6d7e0016c5ef280e30f2821f60473",
           "@@rules_go~0.46.0//:go.mod": "de22304b720f7f61350ec1c9739de6c0a1b1103fd22bfeb6e92c6c843ddc6d6e",
           "@@gazelle~0.35.0//:go.sum": "7c4460e8ecb5dd8691a51d4fa2e9e4751108b933636497ce46db499fc2e7a88d"
         },
         "envVariables": {},
         "generatedRepoSpecs": {
+          "com_github_inconshreveable_mousetrap": {
+            "bzlFile": "@@gazelle~0.35.0//internal:go_repository.bzl",
+            "ruleClassName": "go_repository",
+            "attributes": {
+              "name": "gazelle~0.35.0~go_deps~com_github_inconshreveable_mousetrap",
+              "importpath": "github.com/inconshreveable/mousetrap",
+              "build_directives": [],
+              "build_file_generation": "auto",
+              "build_extra_args": [],
+              "patches": [],
+              "patch_args": [],
+              "sum": "h1:Z8tu5sraLXCXIcARxBp/8cbvlwVa7Z1NHg9XEKhtSvM=",
+              "replace": "",
+              "version": "v1.0.0"
+            }
+          },
           "org_golang_x_tools_go_vcs": {
             "bzlFile": "@@gazelle~0.35.0//internal:go_repository.bzl",
             "ruleClassName": "go_repository",
@@ -1853,6 +1870,22 @@
               "sum": "h1:rNBFJjBCOgVr9pWD7rs/knKL4FRTKgpZmsRfV214zcA=",
               "replace": "",
               "version": "v1.3.0"
+            }
+          },
+          "com_github_spf13_cobra": {
+            "bzlFile": "@@gazelle~0.35.0//internal:go_repository.bzl",
+            "ruleClassName": "go_repository",
+            "attributes": {
+              "name": "gazelle~0.35.0~go_deps~com_github_spf13_cobra",
+              "importpath": "github.com/spf13/cobra",
+              "build_directives": [],
+              "build_file_generation": "auto",
+              "build_extra_args": [],
+              "patches": [],
+              "patch_args": [],
+              "sum": "h1:X+jTBEBqF0bHN+9cSMgmfuvv2VHJ9ezmFNf9Y/XstYU=",
+              "replace": "",
+              "version": "v1.5.0"
             }
           },
           "com_github_mattn_go_runewidth": {
@@ -1965,6 +1998,22 @@
               "sum": "h1:2Gc2Q6hVR1SJ8bBI9Ybzoggp8u/ED2WkM4MfvEIn9+c=",
               "replace": "",
               "version": "v0.0.0-20231115204819-d4c9dccdfbb1"
+            }
+          },
+          "com_github_spf13_pflag": {
+            "bzlFile": "@@gazelle~0.35.0//internal:go_repository.bzl",
+            "ruleClassName": "go_repository",
+            "attributes": {
+              "name": "gazelle~0.35.0~go_deps~com_github_spf13_pflag",
+              "importpath": "github.com/spf13/pflag",
+              "build_directives": [],
+              "build_file_generation": "auto",
+              "build_extra_args": [],
+              "patches": [],
+              "patch_args": [],
+              "sum": "h1:iy+VFUOCP1a+8yFto/drg2CJ5u0yRoB7fZw3DKv/JXA=",
+              "replace": "",
+              "version": "v1.0.5"
             }
           },
           "org_golang_google_genproto": {
@@ -2386,6 +2435,7 @@
                 "com_github_google_go_cmp": "github.com/google/go-cmp",
                 "com_github_holiman_uint256": "github.com/holiman/uint256",
                 "com_github_rivo_tview": "github.com/rivo/tview",
+                "com_github_spf13_cobra": "github.com/spf13/cobra",
                 "com_github_bits_and_blooms_bitset": "github.com/bits-and-blooms/bitset",
                 "com_github_btcsuite_btcd_btcec_v2": "github.com/btcsuite/btcd/btcec/v2",
                 "com_github_consensys_bavard": "github.com/consensys/bavard",
@@ -2394,10 +2444,12 @@
                 "com_github_decred_dcrd_dcrec_secp256k1_v4": "github.com/decred/dcrd/dcrec/secp256k1/v4",
                 "com_github_ethereum_c_kzg_4844": "github.com/ethereum/c-kzg-4844",
                 "com_github_gdamore_encoding": "github.com/gdamore/encoding",
+                "com_github_inconshreveable_mousetrap": "github.com/inconshreveable/mousetrap",
                 "com_github_lucasb_eyer_go_colorful": "github.com/lucasb-eyer/go-colorful",
                 "com_github_mattn_go_runewidth": "github.com/mattn/go-runewidth",
                 "com_github_mmcloughlin_addchain": "github.com/mmcloughlin/addchain",
                 "com_github_rivo_uniseg": "github.com/rivo/uniseg",
+                "com_github_spf13_pflag": "github.com/spf13/pflag",
                 "com_github_supranational_blst": "github.com/supranational/blst",
                 "org_golang_x_crypto": "golang.org/x/crypto",
                 "org_golang_x_exp": "golang.org/x/exp",
@@ -2486,7 +2538,8 @@
             "com_github_gdamore_tcell_v2",
             "com_github_google_go_cmp",
             "com_github_holiman_uint256",
-            "com_github_rivo_tview"
+            "com_github_rivo_tview",
+            "com_github_spf13_cobra"
           ],
           "explicitRootModuleDirectDevDeps": [],
           "useAllRepos": "NO"

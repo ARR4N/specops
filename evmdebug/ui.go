@@ -187,8 +187,10 @@ func (t *termDBG) inputCapture(ev *tcell.EventKey) *tcell.EventKey {
 		}
 	} // switch ev.Rune()
 
-	t.populateStack()
-	t.populateMemory()
+	if t.State().ScopeContext != nil {
+		t.populateStack()
+		t.populateMemory()
+	}
 
 	if propagate {
 		return ev

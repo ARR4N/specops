@@ -1,0 +1,20 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "getting-started_lib",
+    srcs = ["getting-started.spec.go"],
+    importpath = "github.com/solidifylabs/specops/getting-started",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//:specops",
+        "//specopsdev",
+        "//stack",
+        "@com_github_ethereum_go_ethereum//common",
+    ],
+)
+
+go_binary(
+    name = "getting-started",
+    embed = [":getting-started_lib"],
+    visibility = ["//visibility:public"],
+)
