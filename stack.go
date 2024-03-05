@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/core/vm"
+	"github.com/solidifylabs/specops/stack"
 )
 
 // A stackDelta carries the number of values popped and pushed by an opcode.
@@ -12,30 +13,10 @@ type stackDelta struct {
 	pop, push uint
 }
 
-// ExpectStackDepth is a sentinel value that singals to Code.Compile() that it
-// must assert the expected stack depth, returning an error if incorrect. See
-// SetStackDepth() for caveats; note that the expectation is with respect to
-// Compile() and has nothing to do with concrete (runtime) depths.
-type ExpectStackDepth uint
-
-// Bytecode always returns an error.
-func (d ExpectStackDepth) Bytecode() ([]byte, error) {
-	return nil, fmt.Errorf("call to %T.Bytecode()", d)
-}
-
-// SetStackDepth is a sentinel value that signals to Code.Compile() that it must
-// modify its internal counter reflecting the current stack depth.
-//
-// For each vm.OpCode that it encounters, Code.Compile() adjusts a value that
-// reflects its belief about the stack depth. This is a crude mechanism that
-// only works for non-JUMPing code. The programmer can therefore signal,
-// typically after a JUMPDEST, the actual stack depth.
-type SetStackDepth uint
-
-// Bytecode always returns an error.
-func (d SetStackDepth) Bytecode() ([]byte, error) {
-	return nil, fmt.Errorf("call to %T.Bytecode()", d)
-}
+type (
+	ExpectStackDepth = stack.ExpectDepth
+	SetStackDepth    = stack.SetDepth
+)
 
 // Inverted applies DUP<X> and SWAP<X> opcodes relative to the bottom-most value
 // on the stack unless there are more than 16 values, in which case they are
