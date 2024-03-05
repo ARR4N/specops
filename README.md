@@ -1,22 +1,19 @@
 # SpecOps [![Go](https://github.com/solidifylabs/specops/actions/workflows/go.yml/badge.svg)](https://github.com/solidifylabs/specops/actions/workflows/go.yml) [![Go Reference](https://pkg.go.dev/badge/github.com/solidifylabs/specops.svg)](https://pkg.go.dev/github.com/solidifylabs/specops)
 
-> `specops` is a low-level, domain-specific language (and compiler) for crafting [Ethereum VM](https://ethereum.org/en/developers/docs/evm) bytecode.
+**`specops` is a low-level, domain-specific language and compiler for crafting [Ethereum VM](https://ethereum.org/en/developers/docs/evm) bytecode. The project also includes a CLI with code execution and terminal-based debugger.**
 
-This is a _very_ early release. In fact, it's just a weekend project gone rogue
-so is less than a week old.
+This is a _very_ early release, a weekend project gone rogue. Feedback and contributions appreciated.
 
 ## _special_ opcodes
 
-Writing bytecode is hard. There's always that temptation to give up and use a
-higher-level language with all of its conveniences, but that defeats the point.
-What if we could maintain full control of the opcode placement, but with
-syntactic sugar to help the medicine go down?
+Writing bytecode is hard. Tracking stack items is difficult enough, made worse by refactoring that renders every `DUP` and `SWAP` off-by-X.
+[Reverse Polish Notation](https://en.wikipedia.org/wiki/Reverse_Polish_notation) may be suited to stack-based programming, but it's unintuitive when context-switching from Solidity.
 
-*Special* opcodes provide just that. Some are interpreted by the compiler,
-converting them to
-[regular](https://pkg.go.dev/github.com/ethereum/go-ethereum/core/vm#OpCode)
-equivalents, while others are simply compiler hints that leave the resulting
-bytecode unchanged.
+There's always a temptation to give up and use a higher-level language with all of its conveniences, but that defeats the point.
+What if we could maintain full control of the opcode placement, but with syntactic sugar to help the medicine go down?
+
+*Special* opcodes provide just that.
+Some of them are interpreted by the compiler, converting them into [regular](https://pkg.go.dev/github.com/ethereum/go-ethereum/core/vm#OpCode) equivalents, while others are simply compiler hints that leave the resulting bytecode unchanged.
 
 ## Getting started
 
@@ -24,21 +21,25 @@ See the [`getting-started/`](https://github.com/solidifylabs/specops/tree/main/g
 
 ### Do I have to learn Go?
 
-> TL;DR You don't
+No.
 
 There's more about this in the `getting-started/` README, including the rationale for a Go-based DSL.
 
 ## Features
 
+New features will be prioritised based on demand. If there's something you'd like included, please file an Issue.
+
 - [x] `JUMPDEST` labels (absolute)
 - [ ] `JUMPDEST` labels (relative to `PC`)
-- [x] Function-like syntax (optional)
+- [x] Function-like syntax (i.e. Reverse Polish Notation is optional)
 - [x] Inverted `DUP`/`SWAP` special opcodes from "bottom" of stack (a.k.a. pseudo-variables)
 - [x] `PUSH<T>` for native Go types
 - [X] `PUSH(v)` length detection
 - [x] Macros
 - [x] Compiler-state assertions (e.g. expected stack depth)
-- [ ] Automatic stack permutation
+- [ ] Automatic (most-efficient) stack transformation
+  - [ ] Permutations
+  - [ ] Duplications w/ permutations
 - [ ] Standalone compiler
 - [x] In-process EVM execution (geth)
 - [x] Debugger

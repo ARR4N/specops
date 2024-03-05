@@ -22,7 +22,7 @@ If this is your first time using Go, stick between the `START/STOP EDITING HERE`
 
 ### Do I have to learn Go?
 
-> TL;DR You don't
+No.
 
 SpecOps is a DSL built and run in Go, but designed so that it reads and is written like a standalone language.
 The advantage of piggybacking on the Go toolchain is that we get all of the developer tooling out of the box: syntax highlighting, code completion, etc.
