@@ -20,7 +20,13 @@ bytecode unchanged.
 
 ## Getting started
 
-See the [`getting-started`](https://github.com/solidifylabs/specops/tree/main/getting-started) directory for creating your first SpecOps code. Also check out the [examples](#other-examples) and the [documentation](#documentation).
+See the [`getting-started/`](https://github.com/solidifylabs/specops/tree/main/getting-started) directory for creating your first SpecOps code. Also check out the [examples](#other-examples) and the [documentation](#documentation).
+
+### Do I have to learn Go?
+
+> TL;DR You don't
+
+There's more about this in the `getting-started/` README, including the rationale for a Go-based DSL.
 
 ## Features
 

@@ -1,7 +1,13 @@
 # Getting started with SpecOps
 
 1. [Install Go](https://go.dev/doc/install)
-2. From the `getting-started` directory:
+2. Clone this repo:
+
+```shell
+git clone https://github.com/solidifylabs/specops.git
+```
+
+3. From the `getting-started` directory:
 
 ```shell
 go run getting-started.spec.go compile
@@ -14,7 +20,7 @@ This will print the compiled EVM bytecode to `stdout`.
 The `getting-started.spec.go` file contains everything you need to be productive.
 If this is your first time using Go, stick between the `START/STOP EDITING HERE` comments and everything will work.
 
-### Why do I have to learn Go?
+### Do I have to learn Go?
 
 > TL;DR You don't
 
