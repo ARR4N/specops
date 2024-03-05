@@ -1,6 +1,6 @@
 # SpecOps [![Go](https://github.com/solidifylabs/specops/actions/workflows/go.yml/badge.svg)](https://github.com/solidifylabs/specops/actions/workflows/go.yml) [![Go Reference](https://pkg.go.dev/badge/github.com/solidifylabs/specops.svg)](https://pkg.go.dev/github.com/solidifylabs/specops)
 
-> `specops` is a low-level, domain-specific language (and compiler) for crafting [Ethereum VM](https://ethereum.org/en/developers/docs/evm) bytecode in Go.
+> `specops` is a low-level, domain-specific language (and compiler) for crafting [Ethereum VM](https://ethereum.org/en/developers/docs/evm) bytecode.
 
 This is a _very_ early release. In fact, it's just a weekend project gone rogue
 so is less than a week old.
@@ -17,6 +17,16 @@ converting them to
 [regular](https://pkg.go.dev/github.com/ethereum/go-ethereum/core/vm#OpCode)
 equivalents, while others are simply compiler hints that leave the resulting
 bytecode unchanged.
+
+## Getting started
+
+See the [`getting-started/`](https://github.com/solidifylabs/specops/tree/main/getting-started) directory for creating your first SpecOps code. Also check out the [examples](#other-examples) and the [documentation](#documentation).
+
+### Do I have to learn Go?
+
+> TL;DR You don't
+
+There's more about this in the `getting-started/` README, including the rationale for a Go-based DSL.
 
 ## Features
 
@@ -54,11 +64,7 @@ functionality.
 
 ### Hello world
 
-TODO: link to Go playground; for now, here's the [real implementation](https://github.com/solidifylabs/specops/blob/41efe932c9a85e45ce705b231577447e6c944487/examples_test.go#L12).
-
-The `specops` Go package has a minimal footprint to allow for dot-importing,
-making all exported symbols available. TODO: expand on the implications,
-rationale, and recommendations as this goes against the style guide.
+To run this example `Code` block with the SpecOps CLI, see the `getting-started/` directory.
 
 ```go
 import . github.com/solidifylabs/specops
@@ -110,6 +116,8 @@ result, err := results()
 - [`sqrt()`](https://github.com/solidifylabs/specops/blob/41efe932c9a85e45ce705b231577447e6c944487/examples_test.go#L246) as seen ~~on TV~~ in `prb-math` ([original](https://github.com/PaulRBerg/prb-math/blob/5b6279a0cf7c1b1b6a5cc96082811f7ef620cf60/src/Common.sol#L595))
 
 ### Debugger
+
+Key bindings are described in the `getting-started/` README.
 
 ![image](https://github.com/solidifylabs/specops/assets/519948/5057ad0f-bb6f-438b-a295-8b1f410d2330)
 

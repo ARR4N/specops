@@ -1,0 +1,27 @@
+# This file can be ignored (and even deleted) when developing in SpecOps. It is
+# a configuration file for a build system called Bazel (https://bazel.build/)
+# that is used for the development of SpecOps itself.
+#
+# Should you happen to know what Bazel is, all `go run getting-started.spec.go`
+# commands in the README can be replaced with `bazel run . --`.
+
+load("@rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "getting-started_lib",
+    srcs = ["getting-started.spec.go"],
+    importpath = "github.com/solidifylabs/specops/getting-started",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//:specops",
+        "//specopscli",
+        "//stack",
+        "@com_github_ethereum_go_ethereum//common",
+    ],
+)
+
+go_binary(
+    name = "getting-started",
+    embed = [":getting-started_lib"],
+    visibility = ["//visibility:public"],
+)
