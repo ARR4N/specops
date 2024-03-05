@@ -1,5 +1,5 @@
-// Package specopsdev provides tooling for developing specops.Code.
-package specopsdev
+// Package specopscli provides a CLI for developing specops.Code.
+package specopscli
 
 import (
 	"fmt"
@@ -9,13 +9,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// RunCLI runs a CLI for performing commands on the Code. It should be called
-// from a main.main() function and will parse command-line arguments and flags
-// to  perform available commands. For usage, invoke the binary without any
+// Run runs a CLI for performing commands on the Code. It should be called from
+// a main.main() function and will parse command-line arguments and flags to
+// perform available commands. For usage, invoke the binary without any
 // arguments.
-func RunCLI(code specops.Code) {
+func Run(code specops.Code) {
 	if err := run(code); err != nil {
-		log.Fatalf("specopsdev.Run(): %v", err)
+		log.Fatal(err)
 	}
 }
 

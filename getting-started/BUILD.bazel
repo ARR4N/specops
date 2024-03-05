@@ -7,7 +7,7 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//:specops",
-        "//specopsdev",
+        "//specopscli",
         "//stack",
         "@com_github_ethereum_go_ethereum//common",
     ],

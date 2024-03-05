@@ -1,9 +1,9 @@
 load("@rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "specopsdev",
-    srcs = ["specopsdev.go"],
-    importpath = "github.com/solidifylabs/specops/specopsdev",
+    name = "specopscli",
+    srcs = ["specopscli.go"],
+    importpath = "github.com/solidifylabs/specops/specopscli",
     visibility = ["//visibility:public"],
     deps = [
         "//:specops",

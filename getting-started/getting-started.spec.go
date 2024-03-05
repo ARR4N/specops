@@ -4,7 +4,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	. "github.com/solidifylabs/specops" //lint:ignore ST1001 SpecOps DSL is designed to be dot-imported
-	"github.com/solidifylabs/specops/specopsdev"
+	"github.com/solidifylabs/specops/specopscli"
 	"github.com/solidifylabs/specops/stack"
 )
 
@@ -26,7 +26,7 @@ func code() Code {
 }
 
 func main() {
-	specopsdev.RunCLI(code())
+	specopscli.Run(code())
 }
 
 // Stop unused imports being removed.
