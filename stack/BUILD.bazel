@@ -1,8 +1,24 @@
-load("@rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "stack",
-    srcs = ["stack.go"],
+    srcs = [
+        "stack.go",
+        "transform.go",
+    ],
     importpath = "github.com/solidifylabs/specops/stack",
     visibility = ["//visibility:public"],
+    deps = ["@com_github_ethereum_go_ethereum//core/vm"],
+)
+
+go_test(
+    name = "stack_test",
+    srcs = ["transform_test.go"],
+    deps = [
+        ":stack",
+        "//:specops",
+        "//evmdebug",
+        "@com_github_ethereum_go_ethereum//core/vm",
+        "@com_github_google_go_cmp//cmp",
+    ],
 )

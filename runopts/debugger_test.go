@@ -88,12 +88,6 @@ func TestDebuggerCompilationError(t *testing.T) {
 }
 
 func TestDebuggerErrors(t *testing.T) {
-	const invalid = vm.OpCode(0xf8)
-	if vm.StringToOp(invalid.String()) != 0 {
-		// This may happen if the above opcode is added. Any invalid value suffices.
-		t.Fatalf("Bad test setup; %[1]T(%[1]d) = %[1]v is valid; want invalid", invalid)
-	}
-
 	tests := []struct {
 		name        string
 		code        Code
@@ -116,7 +110,7 @@ func TestDebuggerErrors(t *testing.T) {
 		{
 			name: "invalid opcode",
 			code: Code{
-				Raw{byte(invalid)},
+				Raw{byte(INVALID)},
 			},
 			wantErrType: reflect.TypeOf(new(vm.ErrInvalidOpCode)),
 		},

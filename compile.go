@@ -163,6 +163,10 @@ CodeLoop:
 				return nil, err
 			}
 
+			if len(code) == 0 {
+				continue CodeLoop
+			}
+
 			op := vm.OpCode(code[0])
 			d, ok := stackDeltas[op]
 			if !ok {
