@@ -91,18 +91,18 @@ func TestPermute(t *testing.T) {
 			for i := range inOrder {
 				inOrder[i] = uint8(i)
 			}
-			t.Run("after PUSHing indices in order", wantStackTest(dbg, inOrder))
+			t.Run("after PUSHing indices in order", stackTest(dbg, inOrder))
 
 			for i := 0; i < len(swaps); i++ {
 				dbg.Step()
 			}
-			t.Run("after SWAPing based on Permute()", wantStackTest(dbg, tt.indices))
+			t.Run("after SWAPing based on Permute()", stackTest(dbg, tt.indices))
 		})
 	}
 }
 
-// wantStackTest returns a test function that checks the current stack values.
-func wantStackTest(dbg *evmdebug.Debugger, want8 []uint8) func(*testing.T) {
+// stackTest returns a test function that checks the current stack values.
+func stackTest(dbg *evmdebug.Debugger, want8 []uint8) func(*testing.T) {
 	return func(t *testing.T) {
 		t.Helper()
 		st := dbg.State()
