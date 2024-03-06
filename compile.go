@@ -163,19 +163,21 @@ CodeLoop:
 				return nil, err
 			}
 
-			if len(code) == 0 {
-				continue CodeLoop
-			}
+			for i, n := 0, len(code); i < n; i++ {
+				op := vm.OpCode(code[i])
+				d, ok := stackDeltas[op]
+				if !ok {
+					return nil, posErr("invalid %T(%v) as first byte returned by Bytecode()", op, op)
+				}
+				if stackDepth < d.pop {
+					return nil, posErr("popping %d values with stack depth %d", d.pop, stackDepth)
+				}
+				stackDepth += d.push - d.pop // we're not in Solidity anymore ;)
 
-			op := vm.OpCode(code[0])
-			d, ok := stackDeltas[op]
-			if !ok {
-				return nil, posErr("invalid %T(%v) as first byte returned by Bytecode()", op, op)
+				if op.IsPush() {
+					i += int(op - vm.PUSH0)
+				}
 			}
-			if stackDepth < d.pop {
-				return nil, posErr("popping %d values with stack depth %d", d.pop, stackDepth)
-			}
-			stackDepth += d.push - d.pop // we're not in Solidity anymore ;)
 
 			buf.Write(code)
 		}
