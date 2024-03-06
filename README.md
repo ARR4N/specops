@@ -37,8 +37,8 @@ New features will be prioritised based on demand. If there's something you'd lik
 - [X] `PUSH(v)` length detection
 - [x] Macros
 - [x] Compiler-state assertions (e.g. expected stack depth)
-- [ ] Automatic (most-efficient) stack transformation
-  - [ ] Permutations
+- [x] Determination of optimal (least-gas) stack transformations
+  - [x] Permutations
   - [ ] Duplications w/ permutations
 - [ ] Standalone compiler
 - [x] In-process EVM execution (geth)
