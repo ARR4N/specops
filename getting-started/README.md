@@ -10,7 +10,7 @@ git clone https://github.com/solidifylabs/specops.git
 3. From the `getting-started` directory:
 
 ```shell
-go run getting-started.spec.go compile
+go run . compile
 ```
 
 This will print the compiled EVM bytecode to `stdout`. The first time you run it you may see some logs about fetching dependencies, but from then on it will only output the compiled contract.
@@ -45,7 +45,7 @@ will provide more information about each (for now, quite limited).
 Both the `exec` and `debug` commands support the `--calldata` flag, which accepts hex-encoded calldata (*without* the `0x` prefix). For example:
 
 ```shell
-go run getting-started.spec.go debug --calldata decafc0ffeebad
+go run . debug --calldata decafc0ffeebad
 ```
 
 ### Debugger
