@@ -6,6 +6,7 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/holiman/uint256"
 
 	"github.com/solidifylabs/specops/stack"
@@ -33,14 +34,9 @@ func Example_helloWorld() {
 	// Hello world
 }
 
-func ExampleCode_wellKnown() {
-	// This example demonstrates some well-known bytecode examples implemented
-	// with `specops`:
-	//
-	// - EIP-1167 Minimal Proxy Contract
-	// - 0age/metamorphic Metamorphic contract constructor https://github.com/0age/metamorphic/blob/55adac1d2487046002fc33a5dff7d669b5419a3a/contracts/MetamorphicContractFactory.sol#L55
-	//
-	// The compiled bytecode is identical to the originals.
+func ExampleCode_eip1167() {
+	// Demonstrates verbatim recreation of EIP-1167 Minimal Proxy Contract and a
+	// modern equivalent with PUSH0.
 
 	impl := common.HexToAddress("bebebebebebebebebebebebebebebebebebebebe")
 	eip1167 := Code{
@@ -71,7 +67,54 @@ func ExampleCode_wellKnown() {
 		RETURN,
 	}
 
-	metamorphic := Code{
+	// Using PUSH0, here is a modernised version of EIP-1167, reduced by 1 byte
+	// and easy to read.
+	eip1167Modern := Code{
+		Fn(CALLDATACOPY, PUSH0, PUSH0, CALLDATASIZE),
+		Fn(DELEGATECALL, GAS, PUSH(impl), PUSH0, CALLDATASIZE, PUSH0, PUSH0),
+		stack.ExpectDepth(1), // `success`
+		Fn(RETURNDATACOPY, PUSH0, PUSH0, RETURNDATASIZE),
+
+		stack.ExpectDepth(1),  // unchanged
+		PUSH0, RETURNDATASIZE, // prepare for the REVERT/RETURN; these are in "human" order because of the next SWAP
+		Inverted(SWAP1), // bring `success` from the bottom
+		Fn(JUMPI, PUSH("return")),
+
+		Fn(REVERT, stack.ExpectDepth(2)),
+
+		JUMPDEST("return"),
+		Fn(RETURN, stack.SetDepth(2)),
+	}
+
+	for _, eg := range []struct {
+		name string
+		code Code
+	}{
+		{"EIP-1167", eip1167},
+		{"Modernised EIP-1167", eip1167Modern},
+	} {
+		bytecode, err := eg.code.Compile()
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("%19s: %#x\n", eg.name, bytecode)
+	}
+
+	// Output:
+	//
+	//            EIP-1167: 0x363d3d373d3d3d363d73bebebebebebebebebebebebebebebebebebebebe5af43d82803e903d91602b57fd5bf3
+	// Modernised EIP-1167: 0x365f5f375f5f365f73bebebebebebebebebebebebebebebebebebebebe5af43d5f5f3e5f3d91602a57fd5bf3
+}
+
+func ExampleCode_metamorphic0ageVerbose() {
+	// Demonstrates verbatim recreation of 0age's metamorphic contract
+	// constructor: https://github.com/0age/metamorphic/blob/55adac1d2487046002fc33a5dff7d669b5419a3a/contracts/MetamorphicContractFactory.sol#L55
+	//
+	// Using stack.Transform() automation we also see how the size could have
+	// been reduced. Granted, only by a single byte, but it also saves a lot of
+	// development time.
+
+	metamorphicPrelude := Code{
 		// 0age uses PC to place a 0 on the bottom of the stack and then
 		// duplicates it as necessary. Using `Inverted(DUP1)` makes this
 		// much easier to reason about. This is especially so when
@@ -111,37 +154,53 @@ func ExampleCode_wellKnown() {
 
 		Fn(MLOAD, Inverted(DUP1) /*0*/), // [0, fail?, addr]
 		Fn(EXTCODESIZE, DUP1),           // DUP1 as a single argument is like a stack peek
-		DUP1,                            // [0, fail?, addr, size, size]
-		Fn(EXTCODECOPY, SWAP3, SWAP2, DUP1, SWAP4), // TODO: can the arguments be simplified with `Inverted` equivalents?
+	}
+
+	// For reference, a snippet from 0age's comments to explain the stack
+	// transformation that now occurs.
+	//
+	// * ** get extcodesize on fourth stack item for extcodecopy **
+	// * 18 3b extcodesize    [0, 0, address, size]                     <>
+	// ...
+	// ...
+	// * 23 92 swap3          [size, 0, size, 0, 0, address]            <>
+
+	// The stack as it currently stands, labelled top to bottom.
+	const (
+		size = iota
+		address
+		callFailed // presumably zero
+		zero
+
+		depth
+	)
+
+	metamorphic := Code{
+		metamorphicPrelude,
+		stack.Transform(depth)(address, zero, zero, size, callFailed, size).WithOps(
+			// The exact opcodes from the original, which the compiler will
+			// confirm as having the intended result.
+			vm.DUP1, vm.SWAP4, vm.DUP1, vm.SWAP2, vm.SWAP3,
+		),
+		stack.ExpectDepth(6),
+		EXTCODECOPY,
 		RETURN,
 	}
 
-	// Using PUSH0, here is a modernised version of EIP-1167, reduced by 1 byte
-	// and easy to read.
-	eip1167Modern := Code{
-		Fn(CALLDATACOPY, PUSH0, PUSH0, CALLDATASIZE),
-		Fn(DELEGATECALL, GAS, PUSH(impl), PUSH0, CALLDATASIZE, PUSH0, PUSH0),
-		stack.ExpectDepth(1), // `success`
-		Fn(RETURNDATACOPY, PUSH0, PUSH0, RETURNDATASIZE),
-
-		stack.ExpectDepth(1),  // unchanged
-		PUSH0, RETURNDATASIZE, // prepare for the REVERT/RETURN; these are in "human" order because of the next SWAP
-		Inverted(SWAP1), // bring `success` from the bottom
-		Fn(JUMPI, PUSH("return")),
-
-		Fn(REVERT, stack.ExpectDepth(2)),
-
-		JUMPDEST("return"),
-		Fn(RETURN, stack.SetDepth(2)),
+	autoMetamorphic := Code{
+		metamorphicPrelude,
+		stack.Transform(depth)(address, zero, zero, size, callFailed, size),
+		stack.ExpectDepth(6),
+		EXTCODECOPY,
+		RETURN,
 	}
 
 	for _, eg := range []struct {
 		name string
 		code Code
 	}{
-		{"EIP-1167", eip1167},
-		{"Modernised EIP-1167", eip1167Modern},
-		{"0age/metamorphic", metamorphic},
+		{"         0age/metamorphic", metamorphic},
+		{"Auto stack transformation", autoMetamorphic},
 	} {
 		bytecode, err := eg.code.Compile()
 		if err != nil {
@@ -152,9 +211,65 @@ func ExampleCode_wellKnown() {
 
 	// Output:
 	//
-	//            EIP-1167: 0x363d3d373d3d3d363d73bebebebebebebebebebebebebebebebebebebebe5af43d82803e903d91602b57fd5bf3
-	// Modernised EIP-1167: 0x365f5f375f5f365f73bebebebebebebebebebebebebebebebebebebebe5af43d5f5f3e5f3d91602a57fd5bf3
-	//    0age/metamorphic: 0x5860208158601c335a63aaf10f428752fa158151803b80938091923cf3
+	//          0age/metamorphic: 0x5860208158601c335a63aaf10f428752fa158151803b80938091923cf3
+	// Auto stack transformation: 0x5860208158601c335a63aaf10f428752fa158151803b928084923cf3
+}
+
+func ExampleCode_metamorphic0ageClean() {
+	// Identical to the other metamorphic example, but with explanatory comments
+	// removed to demonstrate succinct but readable production usage.
+
+	const zero = Inverted(DUP1) // see first opcode
+
+	metamorphic := Code{
+		// Keep a zero at the bottom of the stack
+		PC,
+		// Prepare a STATICCALL signature
+		Fn( /*STATICCALL*/ GAS, CALLER, PUSH(28), PC /*4*/, zero, PUSH(32)),
+
+		Fn(MSTORE, zero, PUSHSelector("getImplementation()")), // stack unchanged
+
+		Fn(ISZERO, STATICCALL), // consumes all values except the zero
+		stack.ExpectDepth(2),   // [0, fail?] <addr>
+
+		Fn(MLOAD, zero),       // [0, fail?, addr]
+		Fn(EXTCODESIZE, DUP1), // [0, fail?, addr, size]
+	}
+
+	{
+		// Current stack, top to bottom
+		const (
+			size = iota
+			address
+			callFailed // presumed to be 0
+			zero
+
+			depth
+		)
+		metamorphic = append(
+			metamorphic,
+			stack.Transform(depth)(
+				/*EXTCODECOPY*/ address, zero, zero, size,
+				/*RETURN*/ callFailed /*0*/, size,
+			).WithOps(
+				// In reality we wouldn't override the ops, but let the
+				// stack.Transformation find an optimal path.
+				vm.DUP1, vm.SWAP4, vm.DUP1, vm.SWAP2, vm.SWAP3,
+			),
+			EXTCODECOPY,
+			RETURN,
+		)
+	}
+
+	bytecode, err := metamorphic.Compile()
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("%#x", bytecode)
+
+	// Output:
+	//
+	// 0x5860208158601c335a63aaf10f428752fa158151803b80938091923cf3
 }
 
 func ExampleCode_monteCarloPi() {

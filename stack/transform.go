@@ -63,6 +63,8 @@ func Transform(depth uint8) func(indices ...uint8) *Transformation {
 //
 // When Bytecode() is called on the returned value, it confirms that the ops
 // result in the expected transformation and then returns them verbatim.
+//
+// WithOps modifies t and then returns it.
 func (t *Transformation) WithOps(ops ...vm.OpCode) *Transformation {
 	t.override = ops
 	return t
