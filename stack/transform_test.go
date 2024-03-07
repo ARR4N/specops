@@ -45,6 +45,14 @@ func ExampleTransformation() {
 			// {5,6} need to be removed.
 			xform: stack.Transform(7)(4, 0, 2, 2, 3, 1),
 		},
+		{
+			desc:  "Noop Transform",
+			xform: stack.Transform(2)(0, 1),
+		},
+		{
+			desc:  "Noop Permute",
+			xform: stack.Permute(0, 1, 2, 3, 4, 5),
+		},
 	}
 
 	for _, eg := range egs {
@@ -66,6 +74,8 @@ func ExampleTransformation() {
 	// Permute via Transform [SWAP1 SWAP3 SWAP2]
 	// Transform same depth [DUP3 SWAP2 SWAP5]
 	// Transform greater depth [SWAP2 SWAP3 SWAP5 POP SWAP5 POP DUP2 SWAP3]
+	// Noop Transform []
+	// Noop Permute []
 }
 
 func intPtr(x int) *int {
