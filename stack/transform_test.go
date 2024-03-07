@@ -11,9 +11,10 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/solidifylabs/specops"
 	"github.com/solidifylabs/specops/evmdebug"
 	"github.com/solidifylabs/specops/stack"
+
+	. "github.com/solidifylabs/specops"
 )
 
 func ExampleTransformation() {
@@ -178,11 +179,11 @@ func TestTransformations(t *testing.T) {
 			fn: func(indices ...uint8) *stack.Transformation {
 				return stack.Transform(4)(indices...).WithOps(
 					// Only this is actually needed
-					vm.SWAP1,
+					SWAP1,
 					// Arbitrary, resulting in a noop
-					vm.DUP2, vm.DUP1, vm.DUP1, vm.SWAP1,
-					vm.POP, vm.POP, vm.POP,
-					vm.SWAP1, vm.SWAP1, // undoes itself
+					DUP2, DUP1, DUP1, SWAP1,
+					POP, POP, POP,
+					SWAP1, SWAP1, // undoes itself
 				)
 			},
 			depth:        4,
@@ -227,9 +228,9 @@ func TestTransformations(t *testing.T) {
 		t.Run(fmt.Sprintf("%s n=%d %v", tt.name, tt.depth, tt.indices), func(t *testing.T) {
 			t.Parallel()
 
-			var code specops.Code
+			var code Code
 			for i := tt.depth; i > 0; i-- {
-				code = append(code, specops.PUSH(i-1)) // {0 … depth-1} top to bottom
+				code = append(code, PUSH(i-1)) // {0 … depth-1} top to bottom
 			}
 
 			xform := tt.fn(tt.indices...)

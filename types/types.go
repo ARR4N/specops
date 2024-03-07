@@ -15,6 +15,20 @@ type Bytecoder interface {
 	Bytecode() ([]byte, error)
 }
 
+// An OpCode converts a standard geth OpCode into a Bytecoder that returns
+// itself.
+type OpCode vm.OpCode
+
+// Bytecode returns `[]byte{o}, nil`.
+func (o OpCode) Bytecode() ([]byte, error) {
+	return []byte{byte(o)}, nil
+}
+
+// String returns `vm.OpCode(o).String()`.
+func (o OpCode) String() string {
+	return vm.OpCode(o).String()
+}
+
 // A BytecodeHolder is a concatenation of Bytecoders.
 type BytecodeHolder interface {
 	Bytecoder

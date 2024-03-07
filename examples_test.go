@@ -6,7 +6,6 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/holiman/uint256"
 
 	"github.com/solidifylabs/specops/stack"
@@ -180,7 +179,7 @@ func ExampleCode_metamorphic0ageVerbose() {
 		stack.Transform(depth)(address, zero, zero, size, callFailed, size).WithOps(
 			// The exact opcodes from the original, which the compiler will
 			// confirm as having the intended result.
-			vm.DUP1, vm.SWAP4, vm.DUP1, vm.SWAP2, vm.SWAP3,
+			DUP1, SWAP4, DUP1, SWAP2, SWAP3,
 		),
 		stack.ExpectDepth(6),
 		EXTCODECOPY,
@@ -254,7 +253,7 @@ func ExampleCode_metamorphic0ageClean() {
 			).WithOps(
 				// In reality we wouldn't override the ops, but let the
 				// stack.Transformation find an optimal path.
-				vm.DUP1, vm.SWAP4, vm.DUP1, vm.SWAP2, vm.SWAP3,
+				DUP1, SWAP4, DUP1, SWAP2, SWAP3,
 			),
 			EXTCODECOPY,
 			RETURN,

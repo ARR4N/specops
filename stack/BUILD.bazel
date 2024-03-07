@@ -8,7 +8,10 @@ go_library(
     ],
     importpath = "github.com/solidifylabs/specops/stack",
     visibility = ["//visibility:public"],
-    deps = ["@com_github_ethereum_go_ethereum//core/vm"],
+    deps = [
+        "//types",
+        "@com_github_ethereum_go_ethereum//core/vm",
+    ],
 )
 
 go_test(

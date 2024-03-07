@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/core/vm"
+	"github.com/solidifylabs/specops/types"
 )
 
 type xFormType int
@@ -21,7 +22,7 @@ type Transformation struct {
 	typ      xFormType
 	depth    uint8
 	indices  []uint8
-	override []vm.OpCode
+	override []types.OpCode
 }
 
 // Permute returns a Transformation that permutes the order of the stack. The
@@ -65,7 +66,7 @@ func Transform(depth uint8) func(indices ...uint8) *Transformation {
 // result in the expected transformation and then returns them verbatim.
 //
 // WithOps modifies t and then returns it.
-func (t *Transformation) WithOps(ops ...vm.OpCode) *Transformation {
+func (t *Transformation) WithOps(ops ...types.OpCode) *Transformation {
 	t.override = ops
 	return t
 }
@@ -101,7 +102,7 @@ func (t *Transformation) overriden() ([]byte, error) {
 	n := rootNode(uint8(t.depth))
 	var err error
 	for _, o := range t.override {
-		n, err = n.apply(o)
+		n, err = n.apply(vm.OpCode(o))
 		if err != nil {
 			return nil, err
 		}

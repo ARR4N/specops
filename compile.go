@@ -109,7 +109,7 @@ CodeLoop:
 			continue CodeLoop
 
 		case Inverted:
-			toInvert := opCode(op)
+			toInvert := types.OpCode(op)
 			// All DUP have the same upper nibble 0x8 and SWAP have 0x9.
 			base := toInvert & 0xf0
 			if base != vm.DUP1 && base != vm.SWAP1 {
@@ -117,7 +117,7 @@ CodeLoop:
 			}
 			offset := toInvert - base
 
-			last := opCode(min(16, stackDepth))
+			last := types.OpCode(min(16, stackDepth))
 			if base == SWAP1 {
 				last--
 			}
@@ -127,8 +127,8 @@ CodeLoop:
 
 			use = base + last - offset - 1
 
-			if b := use.(opCode) & 0xf0; b != base {
-				panic(fmt.Sprintf("BUG: bad inversion %v -> %v", vm.OpCode(op), vm.OpCode(use.(opCode))))
+			if b := use.(types.OpCode) & 0xf0; b != base {
+				panic(fmt.Sprintf("BUG: bad inversion %v -> %v", vm.OpCode(op), vm.OpCode(use.(types.OpCode))))
 			}
 
 		case PUSHJUMPDEST:
