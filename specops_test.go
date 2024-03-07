@@ -114,13 +114,13 @@ func TestRunCompiled(t *testing.T) {
 	// Starting bytecode with `n` PC opcodes results in <0 … n-1> on the stack.
 	pcs := make(Code, 20)
 	for i := range pcs {
-		pcs[i] = opCode(PC)
+		pcs[i] = types.OpCode(PC)
 	}
 
 	// stackTopReturner returns a contract that pushes `depth` PC values to the
 	// stack, pulls one of them to the top with `Inverted(toInvert)`, and
 	// returns it as a single byte.
-	stackTopReturner := func(depth int, toInvert opCode) Code {
+	stackTopReturner := func(depth int, toInvert types.OpCode) Code {
 		return append(
 			append(Code{ /*guarantee fresh memory*/ }, pcs[:depth]...), // <0 … 15>
 			Inverted(toInvert),
@@ -132,7 +132,7 @@ func TestRunCompiled(t *testing.T) {
 	// DUP with smaller stack returns the nth value.
 	for depth := 12; depth < 16; depth++ {
 		for i := 0; i < depth; i++ {
-			toInvert := DUP1 + opCode(i)
+			toInvert := DUP1 + types.OpCode(i)
 			tests = append(tests, test{
 				name: fmt.Sprintf("inverted %v with stack depth %d (<16)", toInvert, depth),
 				code: stackTopReturner(depth, toInvert),
@@ -145,7 +145,7 @@ func TestRunCompiled(t *testing.T) {
 	// than 16 values the stack is.
 	for depth := 16; depth <= len(pcs); depth++ {
 		for i := 0; i < 16; i++ {
-			toInvert := DUP1 + opCode(i)
+			toInvert := DUP1 + types.OpCode(i)
 			tests = append(tests, test{
 				name: fmt.Sprintf("inverted %v with stack depth %d (>=16)", toInvert, depth),
 				code: stackTopReturner(depth, toInvert),
@@ -160,7 +160,7 @@ func TestRunCompiled(t *testing.T) {
 	// SWAP with smaller stack returns the nth value.
 	for depth := 12; depth <= 16; depth++ {
 		for i := 0; i < depth-1; i++ {
-			toInvert := SWAP1 + opCode(i)
+			toInvert := SWAP1 + types.OpCode(i)
 			tests = append(tests, test{
 				name: fmt.Sprintf("inverted %v with stack depth %d (<16)", toInvert, depth),
 				code: stackTopReturner(depth, toInvert),
@@ -173,7 +173,7 @@ func TestRunCompiled(t *testing.T) {
 	// than 16 values the stack is.
 	for depth := 16; depth <= len(pcs); depth++ {
 		for i := 0; i < 15; i++ {
-			toInvert := SWAP1 + opCode(i)
+			toInvert := SWAP1 + types.OpCode(i)
 			tests = append(tests, test{
 				name: fmt.Sprintf("inverted %v with stack depth %d (>=16)", toInvert, depth),
 				code: stackTopReturner(depth, toInvert),

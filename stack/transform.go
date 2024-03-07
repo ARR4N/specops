@@ -1,11 +1,11 @@
 package stack
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/core/vm"
+	"github.com/solidifylabs/specops/types"
 )
 
 type xFormType int
@@ -19,10 +19,10 @@ const (
 // A Transformation transforms the stack by modifying its order, growing, and/or
 // shrinking it.
 type Transformation struct {
-	typ     xFormType
-	depth   uint8
-	indices []uint8
-	cache   string
+	typ      xFormType
+	depth    uint8
+	indices  []uint8
+	override []types.OpCode
 }
 
 // Permute returns a Transformation that permutes the order of the stack. The
@@ -54,64 +54,106 @@ func Transform(depth uint8) func(indices ...uint8) *Transformation {
 	}
 }
 
+// WithOps sets the exact opcodes that t.Bytecode() MUST return. Possible use
+// cases include:
+//   - Caching: worst-case performance of Permute() is n! while worst-case
+//     Transform() may be higher. WithOps is linear in the number of ops.
+//   - Intent signalling: if an exact sequence of opcodes is required but they
+//     are opaque, the Transformation setup will inform the reader of the
+//     outcome.
+//
+// When Bytecode() is called on the returned value, it confirms that the ops
+// result in the expected transformation and then returns them verbatim.
+//
+// WithOps modifies t and then returns it.
+func (t *Transformation) WithOps(ops ...types.OpCode) *Transformation {
+	t.override = ops
+	return t
+}
+
 // Bytecode returns the stack-transforming opcodes (SWAP, DUP, etc) necessary to
 // achieve the transformation in the most efficient manner.
 func (t *Transformation) Bytecode() ([]byte, error) {
-	if t.cache != "" {
-		return t.cached()
-	}
+	var sizer func() (int, error)
 
 	switch t.typ {
 	case permutation:
-		return t.permute()
+		sizer = t.permutationSize
 	case general:
-		return t.general()
+		sizer = t.generalSize
 	default:
 		return nil, fmt.Errorf("invalid %T.typ = %d", t, t.typ)
 	}
+
+	size, err := sizer()
+	if err != nil {
+		return nil, err
+	}
+
+	if len(t.override) != 0 {
+		return t.overriden()
+	}
+	return t.bfs(size)
 }
 
-func (t *Transformation) cached() ([]byte, error) {
-	return nil, errors.New("cached transformations unimplemented")
+// overriden confirms that the overriding opcodes passed to t.WithOps() result
+// in the expected opcode and then returns them verbatim (as bytes).
+func (t *Transformation) overriden() ([]byte, error) {
+	n := rootNode(uint8(t.depth))
+	var err error
+	for _, o := range t.override {
+		n, err = n.apply(vm.OpCode(o))
+		if err != nil {
+			return nil, err
+		}
+	}
+	if got, want := n, nodeFromIndices(t.indices); got != want {
+		return nil, fmt.Errorf("invalid WithOps() config; transformed stack = %v; want %v", got, want)
+	}
+
+	out := make([]byte, len(t.override))
+	for i, o := range t.override {
+		out[i] = byte(o)
+	}
+	return out, nil
 }
 
-// permute checks that t.indices is valid for a permutation and then returns
-// t.bfs().
-func (t *Transformation) permute() ([]byte, error) {
+// permutationSize confirms t.indices is valid for a permutation and then
+// returns the size to be passed to bfs().
+func (t *Transformation) permutationSize() (int, error) {
 	if n := len(t.indices); n > 16 {
-		return nil, fmt.Errorf("can only permute up to 16 stack items; got %d", n)
+		return 0, fmt.Errorf("can only permute up to 16 stack items; got %d", n)
 	}
 	t.depth = uint8(len(t.indices))
 
 	set := make(map[uint8]bool)
 	for _, idx := range t.indices {
 		if set[idx] {
-			return nil, fmt.Errorf("duplicate index %d in permutation %v", idx, t.indices)
+			return 0, fmt.Errorf("duplicate index %d in permutation %v", idx, t.indices)
 		}
 		set[idx] = true
 	}
 
 	for i := range t.indices { // explicitly not `_, i` like last loop
 		if !set[uint8(i)] {
-			return nil, fmt.Errorf("non-contiguous indices in permutation %v; missing %d", t.indices, i)
+			return 0, fmt.Errorf("non-contiguous indices in permutation %v; missing %d", t.indices, i)
 		}
 	}
-	return t.bfs(len(t.indices))
+	return len(t.indices), nil
 }
 
-// general checks that t.depth and t.indices are valid for any transformation
-// and then returns t.bfs().
-func (t *Transformation) general() ([]byte, error) {
+// generalSize confirms that t.depth and t.indices are valid for any
+// transformation and then returns the size to be passed to bfs().
+func (t *Transformation) generalSize() (int, error) {
 	if t.depth > 16 {
-		return nil, fmt.Errorf("transformation depth %d > 16", t.depth)
+		return 0, fmt.Errorf("transformation depth %d > 16", t.depth)
 	}
 	for _, idx := range t.indices {
 		if idx >= t.depth {
-			return nil, fmt.Errorf("stack index %d beyond transformation depth of %d", idx, t.depth)
+			return 0, fmt.Errorf("stack index %d beyond transformation depth of %d", idx, t.depth)
 		}
 	}
-
-	return t.bfs(int(t.depth))
+	return int(t.depth), nil
 }
 
 // bfs performs a breadth-first search over a graph of stack-value orders,

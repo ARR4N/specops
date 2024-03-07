@@ -69,12 +69,16 @@ func run() error {
 // GENERATED CODE - DO NOT EDIT
 //
 
-import "github.com/ethereum/go-ethereum/core/vm"
+import (
+	"github.com/ethereum/go-ethereum/core/vm"
+
+	"github.com/solidifylabs/specops/types"
+)
 
 // Aliases of all regular vm.OpCode constants that don't have "special" replacements.
 const (
 {{- range .}}{{if not .Special}}
-	{{.Op.String}} = opCode(vm.{{.Op.String}})
+	{{.Op.String}} = types.OpCode(vm.{{.Op.String}})
 {{- end}}{{end}}
 )
 
