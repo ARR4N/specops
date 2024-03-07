@@ -120,6 +120,10 @@ func (t *Transformation) general() ([]byte, error) {
 //
 // bfs should be called by the transformation-type-specific methods that first
 // check for valid indices. bfs itself is, however, type-agnostic.
+//
+// Although POP only uses 2 gas while DUPs/SWAPs use 3, there's no need for a
+// full Dijkstra implementation as changes in stack size can only be achieved by
+// POP/DUP and we limit graph edges accordingly.
 func (t *Transformation) bfs(size int) ([]byte, error) {
 	if size == 0 || size > 16 {
 		return nil, fmt.Errorf("invalid %T size %d", t, size)

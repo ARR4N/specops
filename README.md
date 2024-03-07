@@ -37,9 +37,9 @@ New features will be prioritised based on demand. If there's something you'd lik
 - [X] `PUSH(v)` length detection
 - [x] Macros
 - [x] Compiler-state assertions (e.g. expected stack depth)
-- [x] Determination of optimal (least-gas) stack transformations
-  - [x] Permutations
-  - [ ] Duplications w/ permutations
+- [x] Automated optimal (least-gas) stack transformations
+  - [x] Permutations (`SWAP`-only transforms)
+  - [x] General-purpose (combined `DUP` + `SWAP` + `POP`)
 - [ ] Standalone compiler
 - [x] In-process EVM execution (geth)
 - [x] Debugger
