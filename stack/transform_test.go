@@ -4,6 +4,7 @@ package stack_test
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
 	"testing"
 
@@ -14,6 +15,58 @@ import (
 	"github.com/solidifylabs/specops/evmdebug"
 	"github.com/solidifylabs/specops/stack"
 )
+
+func ExampleTransformation() {
+	egs := []struct {
+		desc  string
+		xform *stack.Transformation
+	}{
+		{
+			desc:  "Permute",
+			xform: stack.Permute(2, 0, 3, 1),
+		},
+		{
+			desc: "Permute via Transform",
+			// Although this is equivalent to Permute(), its verbose, intent
+			// isn't clear, and there are no checks that it's a valid
+			// permutation.
+			xform: stack.Transform(4)(2, 0, 3, 1),
+		},
+		{
+			desc: "Transform same depth",
+			// Guaranteed *not* to have POPs because all stack items in [0,5)
+			// are used.
+			xform: stack.Transform(5)(4, 0, 2, 2, 3, 1),
+		},
+		{
+			desc: "Transform greater depth",
+			// Guaranteed to have POPs because, although the same indices as
+			// above, a greater stack depth is being transformed. Stack items
+			// {5,6} need to be removed.
+			xform: stack.Transform(7)(4, 0, 2, 2, 3, 1),
+		},
+	}
+
+	for _, eg := range egs {
+		bytecode, err := eg.xform.Bytecode()
+		if err != nil {
+			log.Fatalf("%s error %v", eg.desc, err)
+		}
+
+		ops := make([]vm.OpCode, len(bytecode))
+		for i, b := range bytecode {
+			ops[i] = vm.OpCode(b)
+		}
+
+		fmt.Println(eg.desc, ops)
+	}
+
+	// Output:
+	// Permute [SWAP1 SWAP3 SWAP2]
+	// Permute via Transform [SWAP1 SWAP3 SWAP2]
+	// Transform same depth [DUP3 SWAP2 SWAP5]
+	// Transform greater depth [SWAP2 SWAP3 SWAP5 POP SWAP5 POP DUP2 SWAP3]
+}
 
 func intPtr(x int) *int {
 	return &x
