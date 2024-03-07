@@ -40,6 +40,7 @@ New features will be prioritised based on demand. If there's something you'd lik
 - [x] Automated optimal (least-gas) stack transformations
   - [x] Permutations (`SWAP`-only transforms)
   - [x] General-purpose (combined `DUP` + `SWAP` + `POP`)
+  - [x] Caching of search for optimal route
 - [ ] Standalone compiler
 - [x] In-process EVM execution (geth)
 - [x] Debugger
@@ -110,9 +111,11 @@ result, err := results()
 
 ### Other examples
 
-- [Verbatim reimplementation of well-known contracts](https://github.com/solidifylabs/specops/blob/41efe932c9a85e45ce705b231577447e6c944487/examples_test.go#L34) 
-  * EIP-1167 Minimal Proxy ([original](https://eips.ethereum.org/EIPS/eip-1167#specification))
+- Verbatim reimplementation of well-known contracts
+  * [EIP-1167 Minimal Proxy](https://github.com/solidifylabs/specops/blob/b03a75d713bffaec8cbf4b60f235f783e11bbc82/examples_test.go#L36) ([original](https://eips.ethereum.org/EIPS/eip-1167#specification))
   * 0age/metamorphic ([original](https://github.com/0age/metamorphic/blob/55adac1d2487046002fc33a5dff7d669b5419a3a/contracts/MetamorphicContractFactory.sol#L55))
+    - [Verbose version](https://github.com/solidifylabs/specops/blob/b03a75d713bffaec8cbf4b60f235f783e11bbc82/examples_test.go#L108) with explanation of SpecOps functionality + an alternative with automated stack transformation (saves a whole 3 gas!)
+    - [Succinct version](https://github.com/solidifylabs/specops/blob/b03a75d713bffaec8cbf4b60f235f783e11bbc82/examples_test.go#L217) as if writing production code
 - [Monte Carlo approximation of pi](https://github.com/solidifylabs/specops/blob/41efe932c9a85e45ce705b231577447e6c944487/examples_test.go#L158)
 - [`sqrt()`](https://github.com/solidifylabs/specops/blob/41efe932c9a85e45ce705b231577447e6c944487/examples_test.go#L246) as seen ~~on TV~~ in `prb-math` ([original](https://github.com/PaulRBerg/prb-math/blob/5b6279a0cf7c1b1b6a5cc96082811f7ef620cf60/src/Common.sol#L595))
 

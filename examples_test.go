@@ -105,7 +105,7 @@ func ExampleCode_eip1167() {
 	// Modernised EIP-1167: 0x365f5f375f5f365f73bebebebebebebebebebebebebebebebebebebebe5af43d5f5f3e5f3d91602a57fd5bf3
 }
 
-func ExampleCode_metamorphic0ageVerbose() {
+func ExampleCode_verbose0ageMetamorphic() {
 	// Demonstrates verbatim recreation of 0age's metamorphic contract
 	// constructor: https://github.com/0age/metamorphic/blob/55adac1d2487046002fc33a5dff7d669b5419a3a/contracts/MetamorphicContractFactory.sol#L55
 	//
@@ -214,7 +214,7 @@ func ExampleCode_metamorphic0ageVerbose() {
 	// Auto stack transformation: 0x5860208158601c335a63aaf10f428752fa158151803b928084923cf3
 }
 
-func ExampleCode_metamorphic0ageClean() {
+func ExampleCode_succinct0ageMetamorphic() {
 	// Identical to the other metamorphic example, but with explanatory comments
 	// removed to demonstrate succinct but readable production usage.
 
