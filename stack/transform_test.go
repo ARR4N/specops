@@ -173,6 +173,22 @@ func TestTransformations(t *testing.T) {
 			depth:   6,
 			indices: []uint8{1, 3, 0, 3},
 		},
+		{
+			name: "WithOps override",
+			fn: func(indices ...uint8) *stack.Transformation {
+				return stack.Transform(4)(indices...).WithOps(
+					// Only this is actually needed
+					vm.SWAP1,
+					// Arbitrary, resulting in a noop
+					vm.DUP2, vm.DUP1, vm.DUP1, vm.SWAP1,
+					vm.POP, vm.POP, vm.POP,
+					vm.SWAP1, vm.SWAP1, // undoes itself
+				)
+			},
+			depth:        4,
+			indices:      []uint8{1, 0, 2, 3},
+			wantNumSteps: intPtr(10),
+		},
 	}
 
 	rng := rand.New(rand.NewSource(42))
