@@ -88,6 +88,9 @@ func (d *Debugger) waitForEVMBlocked() {
 	// expecting users to pass a context to Wait().
 	//
 	// TODO: remove this once sync.Toggle has a non-context-aware option.
+
+	//lint:ignore errcheck Only sync.ErrToggleClosed is possible, which is a
+	// happy path for us.
 	d.d.blockingEVM.Wait(context.Background())
 }
 
