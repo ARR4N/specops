@@ -18,6 +18,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/holiman/uint256"
 
+	"github.com/solidifylabs/specops/jump"
 	"github.com/solidifylabs/specops/types"
 )
 
@@ -61,25 +62,15 @@ func (r Raw) Bytecode() ([]byte, error) {
 	return []byte(r), nil
 }
 
-// A JUMPDEST is a Bytecoder that is converted into a vm.JUMPDEST while also
-// storing its location in the bytecode for use via a PUSHJUMPDEST or
-// PUSH[string|JUMPDEST](<lbl>).
-type JUMPDEST string
-
-// Bytecode always returns an error as PUSHJUMPDEST values have special handling
-// inside Code.Compile().
-func (j JUMPDEST) Bytecode() ([]byte, error) {
-	return nil, fmt.Errorf("direct call to %T.Bytecode()", j)
-}
-
-// PUSHJUMPDEST pushes the bytecode location of the respective JUMPDEST.
-type PUSHJUMPDEST string
-
-// Bytecode always returns an error as PUSHJUMPDEST values have special handling
-// inside Code.Compile().
-func (p PUSHJUMPDEST) Bytecode() ([]byte, error) {
-	return nil, fmt.Errorf("direct call to %T.Bytecode()", p)
-}
+// Aliases of jump.* types that naturally read as opcodes so should be exported
+// here. They are, however, implemented in the jump package as that's where all
+// related functionality lives.
+type (
+	// JUMPDEST is an alias of jump.Dest.
+	JUMPDEST = jump.Dest
+	// PUSHJUMPDEST is an alias of jump.PushDest.
+	PUSHJUMPDEST = jump.PushDest
+)
 
 // PUSHSelector returns a PUSH4 Bytecoder that pushes the selector of the
 // signature, i.e. `sha3(sig)[:4]`.

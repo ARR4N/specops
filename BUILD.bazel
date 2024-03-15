@@ -27,6 +27,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//evmdebug",
+        "//jump",
         "//runopts",
         "//stack",
         "//types",

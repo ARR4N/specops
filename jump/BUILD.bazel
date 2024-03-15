@@ -1,0 +1,8 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "jump",
+    srcs = ["jump.go"],
+    importpath = "github.com/solidifylabs/specops/jump",
+    visibility = ["//visibility:public"],
+)
