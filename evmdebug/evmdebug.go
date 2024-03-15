@@ -78,6 +78,10 @@ func (d *Debugger) Tracer() vm.EVMLogger {
 // Wait blocks until Debugger is blocking the EVM from running the next opcode.
 // The only reason to call Wait() is to access State() before the first Step().
 func (d *Debugger) Wait() {
+	d.waitForEVMBlocked()
+}
+
+func (d *Debugger) waitForEVMBlocked() {
 	// Although use of context.Background() here goes against the style guide,
 	// it is only because sync.Toggle requires a context. The blocking in this
 	// case is guaranteed to be of negligible time so there's no point in
@@ -116,7 +120,11 @@ func (d *Debugger) Step() {
 	case <-d.done:
 		d.close(true)
 	default:
-		d.Wait()
+		// Fix for https://github.com/solidifylabs/specops/issues/25
+		// When this unblocks we are guaranteed that the *next* opcode is being
+		// blocked, which implies that the *current* one is finished, so we have
+		// synchronised and can return.
+		d.waitForEVMBlocked()
 	}
 }
 
