@@ -322,7 +322,7 @@ func (s *spliceConcat) shrink() error {
 // called before s.reserve().
 func (s *spliceConcat) bytes() ([]byte, error) {
 	code := new(bytes.Buffer)
-	for i, sp := range s.all {
+	for _, sp := range s.all {
 		if _, err := sp.buf.WriteTo(code); err != nil {
 			// This should be impossible, but ignoring the error angers the
 			// linter.
