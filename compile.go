@@ -20,23 +20,31 @@ type splice struct {
 	op  types.Bytecoder // JUMPDEST, PUSHJUMPDEST, or tablePusher
 	// If op is a JUMPDEST
 	offset *int // Current estimate of offset in the bytecode, or nil if not yet estimated
-	// If op is a PUSHJUMPDEST
-	dest *splice // Splice of the respective JUMPDEST
-	// If op is a tablePusher
-	dests []*splice
-
 	// If op is a PUSHJUMPDEST or tablePusher
-	reserved int // Number of bytes reserved (including the PUSH); 1 or 2 per dest + the PUSH
+	dests    []*splice // Splice(s) of the respective JUMPDEST(s)
+	reserved int       // Number of bytes reserved (including the PUSH); 1 + (1 or 2) per dest
 }
 
-// singleByteDests returns true iff all s.dests.offset are non-nil and <256.
-func (s *splice) singleByteDests() bool {
+// bytesPerDest returns 1 iff all s.dests.offset are non-nil and <256, otherwise
+// it returns 2; i.e. it returns the smallest number of bytes per JUMPDEST that
+// can safely be used for all being pushed. This may reduce (but will not
+// increase) as a result of spliceConcat.shrink().
+func (s *splice) bytesPerDest() int {
 	for _, d := range s.dests {
 		if d.offset == nil || *d.offset >= 256 {
-			return false
+			return 2
 		}
 	}
-	return true
+	return 1
+}
+
+// extraBytesNeeded returns the number of bytes needed to represent the
+// JUMPDEST, PUSHJUMPDEST, or tablePusher of the splice.
+func (s *splice) extraBytesNeeded() int {
+	if s.op == nil { // final splice
+		return 0
+	}
+	return 1 + len(s.dests)*s.bytesPerDest()
 }
 
 // A spliceConcat holds a set of sequential splices that are intended to be
@@ -234,21 +242,13 @@ func (s *spliceConcat) reserve() error {
 		case JUMPDEST:
 			x := pc
 			sp.offset = &x
-			pc++
 
 		case PUSHJUMPDEST:
 			d, ok := s.dests[JUMPDEST(op)]
 			if !ok {
 				return fmt.Errorf("%T(%q) without corresponding %T", op, op, JUMPDEST(""))
 			}
-
-			reserve := 3 // PUSHn and 2 bytes as worst-case estimate
-			if d.offset != nil && *d.offset < 256 {
-				reserve = 2
-			}
-			pc += reserve
-			sp.reserved = reserve
-			sp.dest = d
+			sp.dests = []*splice{d}
 
 		case tablePusher:
 			sp.dests = make([]*splice, len(op))
@@ -260,18 +260,15 @@ func (s *spliceConcat) reserve() error {
 				sp.dests[i] = d
 			}
 
-			reserve := 1 + len(op)
-			if !sp.singleByteDests() {
-				reserve += len(op)
-			}
-			pc += reserve
-			sp.reserved = reserve
-
 		case nil:
-			if i != len(s.all)-1 {
+			if i+1 != len(s.all) {
 				return fmt.Errorf("BUG: %T with nil op MUST be last", sp)
 			}
 		}
+
+		reserve := sp.extraBytesNeeded()
+		pc += reserve
+		sp.reserved = reserve
 	}
 	return nil
 }
@@ -298,30 +295,18 @@ func (s *spliceConcat) shrink() error {
 	for {
 		var shrink int
 		for _, sp := range s.all {
-			switch op := sp.op.(type) {
+			switch sp.op.(type) {
 			case JUMPDEST:
 				*sp.offset -= shrink
 
-			case PUSHJUMPDEST:
-				dest := sp.dest
+			case nil:
+				// last splice, as already checked in reserve()
 
-				need := 3
-				if *dest.offset < 256 {
-					need = 2
-				}
+			default:
+				need := sp.extraBytesNeeded()
 				if need < sp.reserved {
+					shrink += sp.reserved - need
 					sp.reserved = need
-					shrink++
-				}
-
-			case tablePusher:
-				need := 1 + len(op)
-				if !sp.singleByteDests() {
-					need += len(op)
-				}
-				if need < sp.reserved {
-					sp.reserved = need
-					shrink += len(op)
 				}
 			}
 		}
@@ -337,41 +322,33 @@ func (s *spliceConcat) shrink() error {
 // called before s.reserve().
 func (s *spliceConcat) bytes() ([]byte, error) {
 	code := new(bytes.Buffer)
-	for _, sp := range s.all {
+	for i, sp := range s.all {
 		if _, err := sp.buf.WriteTo(code); err != nil {
 			// This should be impossible, but ignoring the error angers the
 			// linter.
 			return nil, fmt.Errorf("%T.bytes(): %T.buf.WriteTo(%T): %v", s, sp, code, err)
 		}
 
-		switch op := sp.op.(type) {
+		switch sp.op.(type) {
 		case JUMPDEST:
 			code.WriteByte(byte(vm.JUMPDEST))
 
-		case PUSHJUMPDEST:
-			bc, err := PUSH(uint64(*sp.dest.offset)).Bytecode()
-			if err != nil {
-				return nil, fmt.Errorf("BUG: pushing JUMPDEST %q: %v", sp.op, err)
-			}
-			code.Write(bc)
+		case nil:
+			// last splice
 
-		case tablePusher:
-			bytes := 2
-			if sp.singleByteDests() {
-				bytes = 1
-			}
-
-			full := make([]byte, sp.reserved-1)
+		default:
+			full := make([]byte, sp.reserved-1) // -1 because the PUSH is separate
 			buf := make([]byte, 8)
 
+			n := sp.bytesPerDest()
 			for i, dest := range sp.dests {
 				binary.BigEndian.PutUint64(buf, uint64(*dest.offset))
-				copy(full[i*bytes:i*bytes+bytes], buf[8-bytes:])
+				copy(full[i*n:(i+1)*n], buf[8-n:])
 			}
 
 			bc, err := PUSHBytes(full...).Bytecode()
 			if err != nil {
-				return nil, fmt.Errorf("pushing %T(%q): %v", op, op, err)
+				return nil, fmt.Errorf("pushing %T(%q): %v", sp.op, sp.op, err)
 			}
 			code.Write(bc)
 		}
