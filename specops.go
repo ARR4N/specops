@@ -92,7 +92,7 @@ func (p bytesPusher) ToPush() []byte { return []byte(p) }
 // PUSH returns a PUSH<n> Bytecoder appropriate for the type. It panics if v is
 // negative. A string is equivalent to PUSHJUMPDEST(v).
 func PUSH[P interface {
-	int | uint64 | common.Address | uint256.Int | byte | []byte | JUMPDEST | string
+	int | uint64 | common.Address | uint256.Int | byte | []byte | JUMPDEST | string | jump.Table
 }](v P,
 ) types.Bytecoder {
 	pToB := types.BytecoderFromStackPusher
@@ -125,6 +125,9 @@ func PUSH[P interface {
 	case JUMPDEST:
 		return PUSHJUMPDEST(v)
 
+	case jump.Table:
+		return tablePusher(v)
+
 	default:
 		panic(fmt.Sprintf("no type-switch for %T", v))
 	}
@@ -156,3 +159,13 @@ func (p wordPusher) ToPush() []byte {
 type addressPusher common.Address
 
 func (p addressPusher) ToPush() []byte { return p[:] }
+
+// A tablePusher is a multi-JUMPDEST equivalent of PUSHJUMPDEST, with special
+// handling by Code.Compile().
+type tablePusher jump.Table
+
+// Bytecode always returns an error as tablePusher values have special handling
+// inside Code.Compile().
+func (p tablePusher) Bytecode() ([]byte, error) {
+	return nil, fmt.Errorf("direct call to %T.Bytecode()", p)
+}

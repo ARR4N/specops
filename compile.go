@@ -2,6 +2,7 @@ package specops
 
 import (
 	"bytes"
+	"encoding/binary"
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/core/vm"
@@ -10,18 +11,32 @@ import (
 	"github.com/solidifylabs/specops/types"
 )
 
-// A splice is a (possibly empty) buffer of bytecode, followed by either a
-// JUMPDEST or PUSHJUMPDEST. The location of a JUMPDEST changes the size of a
-// PUSHJUMPDEST, but the location isn't known until preceding PUSHJUMPDESTs are
-// determine. A splice allows for lazy determination of locations.
+// A splice is a (possibly empty) buffer of bytecode, followed by a JUMPDEST,
+// PUSHJUMPDEST, or tablePusher. The location of a JUMPDEST changes the size of
+// the other two, but the location isn't known until preceding push types are
+// determined. A splice allows for lazy determination of locations.
 type splice struct {
 	buf bytes.Buffer
-	op  types.Bytecoder // either JUMPDEST or PUSHJUMPDEST
+	op  types.Bytecoder // JUMPDEST, PUSHJUMPDEST, or tablePusher
 	// If op is a JUMPDEST
 	offset *int // Current estimate of offset in the bytecode, or nil if not yet estimated
 	// If op is a PUSHJUMPDEST
-	dest     *splice // Splice of the respective JUMPDEST
-	reserved int     // Number of bytes, 2 or 3, reserved (including the PUSH)
+	dest *splice // Splice of the respective JUMPDEST
+	// If op is a tablePusher
+	dests []*splice
+
+	// If op is a PUSHJUMPDEST or tablePusher
+	reserved int // Number of bytes reserved (including the PUSH); 1 or 2 per dest + the PUSH
+}
+
+// singleByteDests returns true iff all s.dests.offset are non-nil and <256.
+func (s *splice) singleByteDests() bool {
+	for _, d := range s.dests {
+		if d.offset == nil || *d.offset >= 256 {
+			return false
+		}
+	}
+	return true
 }
 
 // A spliceConcat holds a set of sequential splices that are intended to be
@@ -41,10 +56,12 @@ func (s *spliceConcat) curr() *splice {
 }
 
 // newSpliceBuffer pushes a new *splice to the spliceConcat and returns its
-// bytes.Buffer. This function MUST be called every time a JUMPDEST or
-// PUSHJUMPDEST is encountered by Code.Compile(), passing said op to be appended
-// to the previous splice.
-func newSpliceBuffer[T interface{ JUMPDEST | PUSHJUMPDEST }](s *spliceConcat, op T) *bytes.Buffer {
+// bytes.Buffer. This function MUST be called every time a JUMPDEST,
+// PUSHJUMPDEST, or tablePusher is encountered by Code.Compile(), passing said
+// op to be appended to the previous splice.
+func newSpliceBuffer[T interface {
+	JUMPDEST | PUSHJUMPDEST | tablePusher
+}](s *spliceConcat, op T) *bytes.Buffer {
 	curr := s.curr()
 	curr.op = types.Bytecoder(op)
 	if j, ok := any(op).(JUMPDEST); ok {
@@ -135,6 +152,10 @@ CodeLoop:
 			buf = newSpliceBuffer(splices, op)
 			stackDepth++
 
+		case tablePusher:
+			buf = newSpliceBuffer(splices, op)
+			stackDepth++
+
 		case JUMPDEST:
 			if _, ok := splices.dests[op]; ok {
 				return nil, fmt.Errorf("duplicate JUMPDEST label %q", op)
@@ -152,6 +173,7 @@ CodeLoop:
 			requireStackDepthSetting = true
 
 		case PUSHJUMPDEST:
+		case tablePusher:
 
 		case Raw:
 			code, _ := use.Bytecode() // always returns nil error
@@ -200,7 +222,9 @@ CodeLoop:
 // are reserved as the JUMPDEST's offset may be beyond the 256th byte. Two bytes
 // are sufficient to record any position in 64KiB (larger than all possible
 // contracts). An extra byte is reserved for all PUSHJUMPDESTs for the actual
-// PUSH opcode.
+// PUSH opcode. Similar logic applies to tablePushers as does to PUSHJUMPDESTs
+// except that 2 bytes are reserved *per* JUMPDEST unless *all* have already
+// been seen.
 func (s *spliceConcat) reserve() error {
 	var pc int
 	for i, sp := range s.all {
@@ -226,6 +250,23 @@ func (s *spliceConcat) reserve() error {
 			sp.reserved = reserve
 			sp.dest = d
 
+		case tablePusher:
+			sp.dests = make([]*splice, len(op))
+			for i, lbl := range op {
+				d, ok := s.dests[lbl]
+				if !ok {
+					return fmt.Errorf("%T{…%q…} without corresponding %T", op, lbl, JUMPDEST(""))
+				}
+				sp.dests[i] = d
+			}
+
+			reserve := 1 + len(op)
+			if !sp.singleByteDests() {
+				reserve += len(op)
+			}
+			pc += reserve
+			sp.reserved = reserve
+
 		case nil:
 			if i != len(s.all)-1 {
 				return fmt.Errorf("BUG: %T with nil op MUST be last", sp)
@@ -236,15 +277,16 @@ func (s *spliceConcat) reserve() error {
 }
 
 // shrink performs one or more passes over all splices, finding PUSHJUMPDESTs
-// with too many reserved bytes. This occurs when the respective JUMPDEST was
-// later in the code so its location wasn't yet known by reserve(). Every time
-// the number of reserved bytes can be reduced, a shrinkage counter is
-// incremented and later used on subsequent JUMPDESTs to move them forward in
-// the code.
+// and tablePushers with too many reserved bytes. This occurs when the
+// respective JUMPDEST(s) were later in the code so their location(s) weren't
+// yet known by reserve(). Every time the number of reserved bytes can be
+// reduced, a shrinkage counter is incremented and later used on subsequent
+// JUMPDESTs to move them forward in the code.
 //
-// Note that PUSHJUMPDEST splices have pointers to their respective JUMPDEST
-// splices so there is no need to adjust them to account for shrinkage. Only
-// after shrink() has returned will the pushed values be locked in.
+// Note that PUSHJUMPDEST and tablePusher splices have pointers to their
+// respective JUMPDEST splices so there is no need to adjust them to account for
+// shrinkage. Only after shrink() has returned will the pushed values be locked
+// in.
 //
 // shrink MUST NOT be called before s.reserve().
 //
@@ -256,7 +298,7 @@ func (s *spliceConcat) shrink() error {
 	for {
 		var shrink int
 		for _, sp := range s.all {
-			switch sp.op.(type) {
+			switch op := sp.op.(type) {
 			case JUMPDEST:
 				*sp.offset -= shrink
 
@@ -268,8 +310,18 @@ func (s *spliceConcat) shrink() error {
 					need = 2
 				}
 				if need < sp.reserved {
-					sp.reserved--
+					sp.reserved = need
 					shrink++
+				}
+
+			case tablePusher:
+				need := 1 + len(op)
+				if !sp.singleByteDests() {
+					need += len(op)
+				}
+				if need < sp.reserved {
+					sp.reserved = need
+					shrink += len(op)
 				}
 			}
 		}
@@ -280,9 +332,9 @@ func (s *spliceConcat) shrink() error {
 	}
 }
 
-// bytes returns the concatenated splices, with concrete PUSHJUMPDEST values. It
-// SHOULD NOT be called before s.shrink() and MUST NOT be called before
-// s.reserve().
+// bytes returns the concatenated splices, with concrete PUSHJUMPDEST and
+// tablePluser values. It SHOULD NOT be called before s.shrink() and MUST NOT be
+// called before s.reserve().
 func (s *spliceConcat) bytes() ([]byte, error) {
 	code := new(bytes.Buffer)
 	for _, sp := range s.all {
@@ -292,7 +344,7 @@ func (s *spliceConcat) bytes() ([]byte, error) {
 			return nil, fmt.Errorf("%T.bytes(): %T.buf.WriteTo(%T): %v", s, sp, code, err)
 		}
 
-		switch sp.op.(type) {
+		switch op := sp.op.(type) {
 		case JUMPDEST:
 			code.WriteByte(byte(vm.JUMPDEST))
 
@@ -300,6 +352,26 @@ func (s *spliceConcat) bytes() ([]byte, error) {
 			bc, err := PUSH(uint64(*sp.dest.offset)).Bytecode()
 			if err != nil {
 				return nil, fmt.Errorf("BUG: pushing JUMPDEST %q: %v", sp.op, err)
+			}
+			code.Write(bc)
+
+		case tablePusher:
+			bytes := 2
+			if sp.singleByteDests() {
+				bytes = 1
+			}
+
+			full := make([]byte, sp.reserved-1)
+			buf := make([]byte, 8)
+
+			for i, dest := range sp.dests {
+				binary.BigEndian.PutUint64(buf, uint64(*dest.offset))
+				copy(full[i*bytes:i*bytes+bytes], buf[8-bytes:])
+			}
+
+			bc, err := PUSHBytes(full...).Bytecode()
+			if err != nil {
+				return nil, fmt.Errorf("pushing %T(%q): %v", op, op, err)
 			}
 			code.Write(bc)
 		}

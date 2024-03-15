@@ -1,8 +1,21 @@
-load("@rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "jump",
-    srcs = ["jump.go"],
+    srcs = [
+        "jump.go",
+        "table.go",
+    ],
     importpath = "github.com/solidifylabs/specops/jump",
     visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "jump_test",
+    srcs = ["table_test.go"],
+    deps = [
+        ":jump",
+        "//:specops",
+        "//stack",
+    ],
 )
