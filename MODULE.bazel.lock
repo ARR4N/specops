@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 3,
-  "moduleFileHash": "934badda68f6775a528d875e579a163efbb5ffb0d9a57bd010d2d7383cfb5bdb",
+  "moduleFileHash": "2ebff2ab82e9f7187253731d3890a79a85b45c180a7e909b8fcc58bce9ba2dd7",
   "flags": {
     "cmdRegistries": [
       "https://bcr.bazel.build/"
@@ -67,7 +67,8 @@
             "com_github_google_go_cmp": "com_github_google_go_cmp",
             "com_github_holiman_uint256": "com_github_holiman_uint256",
             "com_github_rivo_tview": "com_github_rivo_tview",
-            "com_github_spf13_cobra": "com_github_spf13_cobra"
+            "com_github_spf13_cobra": "com_github_spf13_cobra",
+            "org_golang_x_sync": "org_golang_x_sync"
           },
           "devImports": [],
           "tags": [
@@ -94,7 +95,7 @@
               "devDependency": false,
               "location": {
                 "file": "@@//:MODULE.bazel",
-                "line": 29,
+                "line": 30,
                 "column": 24
               }
             }
@@ -1767,7 +1768,7 @@
       "general": {
         "bzlTransitiveDigest": "zP01muRk4s4xWGK3gNPXOyDMQkOPsIhu99akeKWFFQ0=",
         "accumulatedFileDigests": {
-          "@@//:go.mod": "24d9fa82d505583d79f519591df0d1044ae8d673ddfe513d508c2590ce7e8b93",
+          "@@//:go.mod": "5ef993439dee7c479ae870e04f09e0fd8d7a0a607969a9e16e403b18b73aeff5",
           "@@rules_go~0.46.0//:go.sum": "d56fdb19b21a5f12bcf625c49432371ac39c2def0f564098fbda107f7c080f40",
           "@@//:go.sum": "3157b5026f950dcfde720d9f2bc5a2103e85df0733c220a25aa91f49d265a667",
           "@@gazelle~0.35.0//:go.mod": "48dc6e771c3028ee1c18b9ffc81e596fd5f6d7e0016c5ef280e30f2821f60473",
@@ -2436,6 +2437,7 @@
                 "com_github_holiman_uint256": "github.com/holiman/uint256",
                 "com_github_rivo_tview": "github.com/rivo/tview",
                 "com_github_spf13_cobra": "github.com/spf13/cobra",
+                "org_golang_x_sync": "golang.org/x/sync",
                 "com_github_bits_and_blooms_bitset": "github.com/bits-and-blooms/bitset",
                 "com_github_btcsuite_btcd_btcec_v2": "github.com/btcsuite/btcd/btcec/v2",
                 "com_github_consensys_bavard": "github.com/consensys/bavard",
@@ -2453,7 +2455,6 @@
                 "com_github_supranational_blst": "github.com/supranational/blst",
                 "org_golang_x_crypto": "golang.org/x/crypto",
                 "org_golang_x_exp": "golang.org/x/exp",
-                "org_golang_x_sync": "golang.org/x/sync",
                 "org_golang_x_sys": "golang.org/x/sys",
                 "org_golang_x_term": "golang.org/x/term",
                 "org_golang_x_text": "golang.org/x/text",
@@ -2539,7 +2540,8 @@
             "com_github_google_go_cmp",
             "com_github_holiman_uint256",
             "com_github_rivo_tview",
-            "com_github_spf13_cobra"
+            "com_github_spf13_cobra",
+            "org_golang_x_sync"
           ],
           "explicitRootModuleDirectDevDeps": [],
           "useAllRepos": "NO"

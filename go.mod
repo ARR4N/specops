@@ -9,6 +9,7 @@ require (
 	github.com/holiman/uint256 v1.2.4
 	github.com/rivo/tview v0.0.0-20240225120200-5605142ca62e
 	github.com/spf13/cobra v1.5.0
+	golang.org/x/sync v0.5.0
 )
 
 require (
@@ -29,7 +30,6 @@ require (
 	github.com/supranational/blst v0.3.11 // indirect
 	golang.org/x/crypto v0.17.0 // indirect
 	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa // indirect
-	golang.org/x/sync v0.5.0 // indirect
 	golang.org/x/sys v0.17.0 // indirect
 	golang.org/x/term v0.17.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
