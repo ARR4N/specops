@@ -25,13 +25,13 @@ type splice struct {
 	reserved int       // Number of bytes reserved (including the PUSH); 1 + (1 or 2) per dest
 }
 
-// bytesPerDest returns 1 iff all s.dests.offset are non-nil and <256, otherwise
-// it returns 2; i.e. it returns the smallest number of bytes per JUMPDEST that
-// can safely be used for all being pushed. This may reduce (but will not
-// increase) as a result of spliceConcat.shrink().
+// bytesPerDest returns an optimistic estimate of the number of the least number
+// of bytes needed to represent the largest s.dests.offset. If any non-nil
+// offset >= 256 then bytesPerDest returns 2, otherwise it returns 1 (i.e. the
+// optimistic element). This may change due to calls to spliceConcat.expand.
 func (s *splice) bytesPerDest() int {
 	for _, d := range s.dests {
-		if d.offset == nil || *d.offset >= 256 {
+		if d.offset != nil && *d.offset >= 256 {
 			return 2
 		}
 	}
@@ -44,11 +44,49 @@ func (s *splice) extraBytesNeeded() int {
 	if s.op == nil { // final splice
 		return 0
 	}
-	return 1 + len(s.dests)*s.bytesPerDest()
+
+	return 1 + len(s.dests)*s.bytesPerDest() - s.leadingZeroes()
+}
+
+// leadingZeroes returns the number of bytes that PUSH() will strip from the
+// concatenated s.dests.offset values.
+func (s *splice) leadingZeroes() int {
+	if len(s.dests) == 0 {
+		return 0
+	}
+
+	// In all cases, if d.offset is nil, it can never be set to 0 because that
+	// would have had to already happened (by nature of being) the very first
+	// opcode.
+
+	if s.bytesPerDest() == 1 {
+		var n int
+		for _, d := range s.dests {
+			if d.offset == nil || *d.offset != 0 {
+				break
+			}
+			n++
+		}
+		return n
+	}
+
+	// bytesPerDest == 2
+	var n int
+	for _, d := range s.dests {
+		switch {
+		case d.offset == nil, *d.offset < 256:
+			return n + 1
+		case *d.offset == 0:
+			n += 2
+		default:
+			return n
+		}
+	}
+	return n
 }
 
 // A spliceConcat holds a set of sequential splices that are intended to be
-// concatenated to produce bytecode. Its reserve() and shrink() methods
+// concatenated to produce bytecode. Its reserve() and expand() methods
 // implement lazy instantiation of JUMPDEST locations.
 type spliceConcat struct {
 	all   []*splice
@@ -217,7 +255,7 @@ CodeLoop:
 	if err := splices.reserve(); err != nil {
 		return nil, err
 	}
-	if err := splices.shrink(); err != nil {
+	if err := splices.expand(); err != nil {
 		return nil, err
 	}
 	return splices.bytes()
@@ -273,52 +311,52 @@ func (s *spliceConcat) reserve() error {
 	return nil
 }
 
-// shrink performs one or more passes over all splices, finding PUSHJUMPDESTs
-// and tablePushers with too many reserved bytes. This occurs when the
-// respective JUMPDEST(s) were later in the code so their location(s) weren't
-// yet known by reserve(). Every time the number of reserved bytes can be
-// reduced, a shrinkage counter is incremented and later used on subsequent
-// JUMPDESTs to move them forward in the code.
+// expand performs one or more passes over all splices, finding PUSHJUMPDESTs
+// and tablePushers with too few reserved bytes. This occurs when the respective
+// JUMPDEST(s) were later in the code so their location(s) weren't yet known by
+// reserve(). Every time the number of reserved bytes must be increased, an
+// expansion counter is increased and later used on subsequent JUMPDESTs to move
+// them back in the code.
 //
 // Note that PUSHJUMPDEST and tablePusher splices have pointers to their
 // respective JUMPDEST splices so there is no need to adjust them to account for
-// shrinkage. Only after shrink() has returned will the pushed values be locked
+// expansion. Only after expand() has returned will the pushed values be locked
 // in.
 //
-// shrink MUST NOT be called before s.reserve().
+// expand() MUST NOT be called before s.reserve().
 //
 // TODO: is there a more efficient algorithm? A cursory glance suggests that
 // it's currently O(nm) for n PUSHs and m JUMPs, which is at least quadratic in
-// n. The interplay between shrinkage via PUSHs and shifting of JUMPs suggests
+// n. The interplay between expansion via PUSHs and shifting of JUMPs suggests
 // that this is best-possible, but perhaps early exiting is still possible.
-func (s *spliceConcat) shrink() error {
+func (s *spliceConcat) expand() error {
 	for {
-		var shrink int
+		expand := 0
 		for _, sp := range s.all {
 			switch sp.op.(type) {
 			case JUMPDEST:
-				*sp.offset -= shrink
+				*sp.offset += expand
 
 			case nil:
 				// last splice, as already checked in reserve()
 
 			default:
 				need := sp.extraBytesNeeded()
-				if need < sp.reserved {
-					shrink += sp.reserved - need
+				if need > sp.reserved {
+					expand += need - sp.reserved
 					sp.reserved = need
 				}
 			}
 		}
 
-		if shrink == 0 {
+		if expand == 0 {
 			return nil
 		}
 	}
 }
 
 // bytes returns the concatenated splices, with concrete PUSHJUMPDEST and
-// tablePluser values. It SHOULD NOT be called before s.shrink() and MUST NOT be
+// tablePluser values. It SHOULD NOT be called before s.expand() and MUST NOT be
 // called before s.reserve().
 func (s *spliceConcat) bytes() ([]byte, error) {
 	code := new(bytes.Buffer)
@@ -337,7 +375,9 @@ func (s *spliceConcat) bytes() ([]byte, error) {
 			// last splice
 
 		default:
-			full := make([]byte, sp.reserved-1) // -1 because the PUSH is separate
+			// The leading zeroes will be stripped by PUSHBytes(), but we need
+			// them to simplifying the binary-encoding loop.
+			full := make([]byte, sp.extraBytesNeeded()+sp.leadingZeroes()-1) // -1 because the PUSH is separate
 			buf := make([]byte, 8)
 
 			n := sp.bytesPerDest()

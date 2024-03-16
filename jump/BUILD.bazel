@@ -17,6 +17,7 @@ go_test(
         ":jump",
         "//:specops",
         "//stack",
+        "@com_github_ethereum_go_ethereum//core/vm",
         "@com_github_google_go_cmp//cmp",
     ],
 )
