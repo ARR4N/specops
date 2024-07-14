@@ -483,6 +483,168 @@ func ExampleCode_sqrt() {
 	//  Equal: true
 }
 
+func ExamplePUSH_jumpTable() {
+	// This is a highly optimised factorial function, implementing one of the
+	// Curta gas-golfing (https://www.curta.wtf/golf/2) solutions by philogy.eth
+	// https://basescan.org/address/0x550d8df432706504b550c7cf93660cd362d7f95c
+
+	prod := func(start, end uint64) uint64 {
+		x := end
+		for i := start; i < end; i++ {
+			x *= i
+		}
+		return x
+	}
+
+	rangeMuls := Code{
+		JUMPDEST("49:54"), stack.SetDepth(2),
+		Fn(MUL,
+			PUSH(prod(49, 54)),
+		),
+
+		JUMPDEST("43:48"), stack.SetDepth(2),
+		Fn(MUL,
+			PUSH(prod(43, 48)),
+		),
+
+		JUMPDEST("37:42"), stack.SetDepth(2),
+		Fn(MUL,
+			PUSH(prod(37, 42)),
+		),
+
+		JUMPDEST("31:36"), stack.SetDepth(2),
+		Fn(MUL,
+			PUSH(prod(31, 36)),
+		),
+
+		JUMPDEST("25:30"), stack.SetDepth(2),
+		Fn(MUL,
+			PUSH(prod(25, 30)),
+		),
+
+		JUMPDEST("19:24"), stack.SetDepth(2),
+		Fn(MUL,
+			PUSH(prod(19, 24)),
+		),
+
+		JUMPDEST("13:18"), stack.SetDepth(2),
+		Fn(MUL,
+			PUSH(prod(13, 18)),
+		),
+
+		JUMPDEST("7:12"), stack.SetDepth(2),
+		Fn(MUL,
+			PUSH(prod(7, 12)),
+		),
+
+		JUMPDEST("1:6"), stack.SetDepth(2),
+		Fn(MUL,
+			PUSH(prod(1, 6)),
+		),
+
+		JUMPDEST("no-range-mul"), stack.SetDepth(2),
+	}
+	ranges := []string{
+		"no-range-mul",
+		"1:6",
+		"7:12",
+		"13:18",
+		"19:24",
+		"25:30",
+		"31:36",
+		"37:42",
+		"43:48",
+		"49:54",
+	}
+
+	const Input = Inverted(DUP1) // always bottom of the stack
+
+	remainderMuls := Code{
+		JUMPDEST("sub4"), stack.SetDepth(2),
+		Fn(MUL,
+			Fn(SUB, Input, PUSH(4)),
+		),
+
+		JUMPDEST("sub3"), stack.SetDepth(2),
+		Fn(MUL,
+			Fn(SUB, Input, PUSH(3)),
+		),
+
+		JUMPDEST("sub2"), stack.SetDepth(2),
+		Fn(MUL,
+			Fn(SUB, Input, PUSH(2)),
+		),
+
+		JUMPDEST("sub1"), stack.SetDepth(2),
+		Fn(MUL,
+			Fn(SUB, Input, PUSH(1)),
+		),
+
+		JUMPDEST("sub0"), stack.SetDepth(2),
+		MUL, /* result * input */
+		stack.ExpectDepth(1),
+
+		JUMPDEST("no-remainder-mul"), stack.SetDepth(2),
+	}
+	remainders := []string{
+		"no-remainder-mul",
+		"sub0",
+		"sub1",
+		"sub2",
+		"sub3",
+		"sub4",
+	}
+
+	const divisor = 6
+
+	code := Code{
+		PUSH(4),
+		CALLDATALOAD,
+		PUSH(1), // Result
+
+		Fn(JUMPI,
+			Fn(BYTE,
+				Fn(ADD,
+					Fn(DIV, Input, PUSH(divisor)),
+					PUSH(32-len(ranges)),
+				),
+				PUSH(ranges),
+			),
+			Fn(LT, Input, PUSH(58)),
+		),
+
+		RETURNDATASIZE,
+		RETURNDATASIZE,
+		REVERT,
+
+		rangeMuls,
+
+		Fn(JUMP,
+			Fn(BYTE,
+				Fn(ADD,
+					Fn(MOD, Input, PUSH(divisor)),
+					PUSH(32-len(remainders)),
+				),
+				PUSH(remainders),
+			),
+		),
+
+		remainderMuls,
+
+		Fn(MSTORE, RETURNDATASIZE),
+		Fn(RETURN, RETURNDATASIZE, MSIZE),
+	}
+
+	got, err := code.Compile()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("%#x", got)
+
+	// Output: 0x6004356001603a8210695d58524c453e37302820601660068504011a573d3dfd5b64045461b590025b64020ea2db80025b63e11fed20025b6353971500025b63197b6830025b6305c6b740025b62cbf340025b620a26c0025b6102d0025b658886807a746e601a60068406011a565b60048203025b60038203025b60028203025b60018203025b025b3d52593df3
+}
+
 func compileAndRun[T interface{ []byte | [32]byte }](code Code, callData T) []byte {
 	var slice []byte
 	switch c := any(callData).(type) {

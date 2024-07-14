@@ -1,3 +1,5 @@
+// Package stack provides stack-related "special opcodes" for use in specops
+// code.
 package stack
 
 import "fmt"

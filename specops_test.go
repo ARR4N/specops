@@ -30,8 +30,8 @@ func mustRunByteCode(compiled, callData []byte) []byte {
 func TestRunCompiled(t *testing.T) {
 	// hashOrEcho branches based on the first byte of calldata, which indicates
 	// whether it should hash (and return) the remaining bytes, or just echo
-	// them. It demonstrates JUMPDEST labeling as well as PUSHJUMPDEST(<lbl>) to
-	// jump both backwards and forwards in the code.
+	// them. It demonstrates JUMPDEST labeling as well as PUSH(<lbl>) to jump
+	// both backwards and forwards in the code.
 	hashOrEcho := Code{
 		Fn(SUB, CALLDATASIZE, PUSH(1)), // <cds-1> {}
 		// A separate Fn() moves us out of "function mode". Note that if we
@@ -42,7 +42,7 @@ func TestRunCompiled(t *testing.T) {
 		Fn(CALLDATACOPY, PUSH0, PUSH(1), DUP1, stack.ExpectDepth(1)), // <cds-1> {cds[1:]}
 
 		Fn(SHR, PUSH(248), Fn(CALLDATALOAD, PUSH0)), // <cds-1, hash?> {cds[1:]}
-		Fn(JUMPI, PUSHJUMPDEST("hash")),             // <cds-1> {cds[1:]}
+		Fn(JUMPI, PUSH("hash")),                     // <cds-1> {cds[1:]}
 
 		// Placing the return code here is unnecessarily convoluted, but acts to
 		// demonstrate backwards jumping from the end of the hashing code.
@@ -63,7 +63,7 @@ func TestRunCompiled(t *testing.T) {
 			),
 		), // <> {hash}
 		PUSH(0x20),               // <32>
-		Fn(JUMP, PUSH("return")), // PUSH(string) is syntactic sugar for a PUSHJUMPDEST
+		Fn(JUMP, PUSH("return")), // here PUSH(string) pushes the location of the respective JUMPDEST
 	}
 
 	type test struct {
@@ -269,7 +269,8 @@ func TestNoCallBytecode(t *testing.T) {
 	for _, b := range []types.Bytecoder{
 		Code{},
 		JUMPDEST(""),
-		PUSHJUMPDEST(""),
+		pushLabel(""),
+		pushLabels{},
 		stack.ExpectDepth(0),
 		stack.SetDepth(0),
 		Inverted(0),

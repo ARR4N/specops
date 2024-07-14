@@ -62,22 +62,30 @@ func (r Raw) Bytecode() ([]byte, error) {
 }
 
 // A JUMPDEST is a Bytecoder that is converted into a vm.JUMPDEST while also
-// storing its location in the bytecode for use via a PUSHJUMPDEST or
+// storing its location in the bytecode for use via
 // PUSH[string|JUMPDEST](<lbl>).
 type JUMPDEST string
 
-// Bytecode always returns an error as PUSHJUMPDEST values have special handling
+// Bytecode always returns an error as JUMPDEST values have special handling
 // inside Code.Compile().
 func (j JUMPDEST) Bytecode() ([]byte, error) {
 	return nil, fmt.Errorf("direct call to %T.Bytecode()", j)
 }
 
-// PUSHJUMPDEST pushes the bytecode location of the respective JUMPDEST.
-type PUSHJUMPDEST string
+// A pushLabel pushes the respective JUMPDEST to the stack.
+// TODO(arr4n): expand this to support arbitrary labels and the offset
+// difference between them (i.e. size of a block).
+type pushLabel string
 
-// Bytecode always returns an error as PUSHJUMPDEST values have special handling
-// inside Code.Compile().
-func (p PUSHJUMPDEST) Bytecode() ([]byte, error) {
+func (p pushLabel) Bytecode() ([]byte, error) {
+	return nil, fmt.Errorf("direct call to %T.Bytecode()", p)
+}
+
+// A pushLabels is the multi-label equivalent of pushLabel. It can be used, for
+// example, for pushing jump tables.
+type pushLabels []string
+
+func (p pushLabels) Bytecode() ([]byte, error) {
 	return nil, fmt.Errorf("direct call to %T.Bytecode()", p)
 }
 
@@ -99,9 +107,10 @@ type bytesPusher []byte
 func (p bytesPusher) ToPush() []byte { return []byte(p) }
 
 // PUSH returns a PUSH<n> Bytecoder appropriate for the type. It panics if v is
-// negative. A string is equivalent to PUSHJUMPDEST(v).
+// negative. A string refers to the respective JUMPDEST while a []string refers
+// to a concatenation of the same (i.e. a JUMP table).
 func PUSH[P interface {
-	int | uint64 | common.Address | uint256.Int | byte | []byte | JUMPDEST | string
+	int | uint64 | common.Address | uint256.Int | byte | []byte | JUMPDEST | string | []string
 }](v P,
 ) types.Bytecoder {
 	pToB := types.BytecoderFromStackPusher
@@ -129,10 +138,13 @@ func PUSH[P interface {
 		return pToB(wordPusher(v))
 
 	case string:
-		return PUSHJUMPDEST(v)
+		return pushLabel(v)
 
 	case JUMPDEST:
-		return PUSHJUMPDEST(v)
+		return pushLabel(v)
+
+	case []string:
+		return pushLabels(v)
 
 	default:
 		panic(fmt.Sprintf("no type-switch for %T", v))
