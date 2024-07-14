@@ -13,6 +13,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math/bits"
+	"unsafe"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -61,6 +62,15 @@ func (r Raw) Bytecode() ([]byte, error) {
 	return []byte(r), nil
 }
 
+// A label is a type that tags a section of code with a (human-readable) string
+// that can be PUSH()d.
+type label interface {
+	types.Bytecoder
+	label() string
+}
+
+var _ = []label{JUMPDEST(""), Label("")}
+
 // A JUMPDEST is a Bytecoder that is converted into a vm.JUMPDEST while also
 // storing its location in the bytecode for use via
 // PUSH[string|JUMPDEST](<lbl>).
@@ -72,9 +82,26 @@ func (j JUMPDEST) Bytecode() ([]byte, error) {
 	return nil, fmt.Errorf("direct call to %T.Bytecode()", j)
 }
 
-// A pushLabel pushes the respective JUMPDEST to the stack.
-// TODO(arr4n): expand this to support arbitrary labels and the offset
-// difference between them (i.e. size of a block).
+func (j JUMPDEST) label() string {
+	return string(j)
+}
+
+// A Label marks a specific point in the code without adding any bytes when
+// compiled. The corresponding numerical value is the first byte *after* the
+// Label.
+type Label string
+
+// Bytecode always returns an error as Label values have special handling
+// inside Code.Compile().
+func (l Label) Bytecode() ([]byte, error) {
+	return nil, fmt.Errorf("direct call to %T.Bytecode()", l)
+}
+
+func (l Label) label() string {
+	return string(l)
+}
+
+// A pushLabel pushes the respective JUMPDEST/Label to the stack.
 type pushLabel string
 
 func (p pushLabel) Bytecode() ([]byte, error) {
@@ -87,6 +114,10 @@ type pushLabels []string
 
 func (p pushLabels) Bytecode() ([]byte, error) {
 	return nil, fmt.Errorf("direct call to %T.Bytecode()", p)
+}
+
+func asPushLabels[T ~string](xs []T) pushLabels {
+	return *(*pushLabels)(unsafe.Pointer(&xs))
 }
 
 // PUSHSelector returns a PUSH4 Bytecoder that pushes the selector of the
@@ -107,10 +138,10 @@ type bytesPusher []byte
 func (p bytesPusher) ToPush() []byte { return []byte(p) }
 
 // PUSH returns a PUSH<n> Bytecoder appropriate for the type. It panics if v is
-// negative. A string refers to the respective JUMPDEST while a []string refers
-// to a concatenation of the same (i.e. a JUMP table).
+// negative. A string refers to the respective JUMPDEST or Label while a
+// []string refers to a concatenation of the same (e.g. a JUMP table).
 func PUSH[P interface {
-	int | uint64 | common.Address | uint256.Int | byte | []byte | JUMPDEST | string | []string
+	int | uint64 | common.Address | uint256.Int | byte | []byte | JUMPDEST | []JUMPDEST | Label | []Label | string | []string
 }](v P,
 ) types.Bytecoder {
 	pToB := types.BytecoderFromStackPusher
@@ -142,6 +173,15 @@ func PUSH[P interface {
 
 	case JUMPDEST:
 		return pushLabel(v)
+
+	case []JUMPDEST:
+		return asPushLabels(v)
+
+	case Label:
+		return pushLabel(v)
+
+	case []Label:
+		return asPushLabels(v)
 
 	case []string:
 		return pushLabels(v)
