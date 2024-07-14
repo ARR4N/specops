@@ -62,14 +62,18 @@ func (r Raw) Bytecode() ([]byte, error) {
 	return []byte(r), nil
 }
 
-// A label is a type that tags a section of code with a (human-readable) string
-// that can be PUSH()d.
-type label interface {
+// A tag is a labelled location (byte index) in compiled code that can be
+// referenced by the label instead of the numeric value. For example, a
+// specops.JUMPDEST can be thought of as a tag followed by a
+// vm.OpCode(JUMPDEST). Similarly, a Label is a lone tag.
+type tag string
+
+type tagged interface {
 	types.Bytecoder
-	label() string
+	tag() tag
 }
 
-var _ = []label{JUMPDEST(""), Label("")}
+var _ = []tagged{JUMPDEST(""), Label("")}
 
 // A JUMPDEST is a Bytecoder that is converted into a vm.JUMPDEST while also
 // storing its location in the bytecode for use via
@@ -82,8 +86,8 @@ func (j JUMPDEST) Bytecode() ([]byte, error) {
 	return nil, fmt.Errorf("direct call to %T.Bytecode()", j)
 }
 
-func (j JUMPDEST) label() string {
-	return string(j)
+func (j JUMPDEST) tag() tag {
+	return tag(j)
 }
 
 // A Label marks a specific point in the code without adding any bytes when
@@ -97,28 +101,32 @@ func (l Label) Bytecode() ([]byte, error) {
 	return nil, fmt.Errorf("direct call to %T.Bytecode()", l)
 }
 
-func (l Label) label() string {
-	return string(l)
+func (l Label) tag() tag {
+	return tag(l)
 }
 
-// A pushLabel pushes the respective JUMPDEST/Label to the stack.
-type pushLabel string
+// A pushTag pushes the tag's byte index to the stack.
+type pushTag tag
 
-func (p pushLabel) Bytecode() ([]byte, error) {
+func (p pushTag) Bytecode() ([]byte, error) {
 	return nil, fmt.Errorf("direct call to %T.Bytecode()", p)
 }
 
-// A pushLabels is the multi-label equivalent of pushLabel. It can be used, for
+// A pushTags is the multi-tag equivalent of pushTag. It can be used, for
 // example, for pushing jump tables.
-type pushLabels []string
+type pushTags []tag
 
-func (p pushLabels) Bytecode() ([]byte, error) {
+func (p pushTags) Bytecode() ([]byte, error) {
 	return nil, fmt.Errorf("direct call to %T.Bytecode()", p)
 }
 
-func asPushLabels[T ~string](xs []T) pushLabels {
-	return *(*pushLabels)(unsafe.Pointer(&xs))
+func asPushTags[T ~string](xs []T) pushTags {
+	return *(*pushTags)(unsafe.Pointer(&xs))
 }
+
+// Compile-time guarantee that tag itself has the same underlying type as those
+// accepted by the generic function.
+var _ = asPushTags[tag]
 
 // PUSHSelector returns a PUSH4 Bytecoder that pushes the selector of the
 // signature, i.e. `sha3(sig)[:4]`.
@@ -169,22 +177,22 @@ func PUSH[P interface {
 		return pToB(wordPusher(v))
 
 	case string:
-		return pushLabel(v)
+		return pushTag(v)
 
 	case JUMPDEST:
-		return pushLabel(v)
+		return pushTag(v)
 
 	case []JUMPDEST:
-		return asPushLabels(v)
+		return asPushTags(v)
 
 	case Label:
-		return pushLabel(v)
+		return pushTag(v)
 
 	case []Label:
-		return asPushLabels(v)
+		return asPushTags(v)
 
 	case []string:
-		return pushLabels(v)
+		return asPushTags(v)
 
 	default:
 		panic(fmt.Sprintf("no type-switch for %T", v))

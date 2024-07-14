@@ -13,35 +13,34 @@ import (
 
 type lazyLocator interface {
 	types.Bytecoder
-	pushesLazyLocation() bool
+	lazy()
 }
 
-func (JUMPDEST) pushesLazyLocation() bool   { return false }
-func (Label) pushesLazyLocation() bool      { return false }
-func (pushLabel) pushesLazyLocation() bool  { return true }
-func (pushLabels) pushesLazyLocation() bool { return true }
+func (JUMPDEST) lazy() {}
+func (Label) lazy()    {}
+func (pushTag) lazy()  {}
+func (pushTags) lazy() {}
 
 // A splice is a (possibly empty) buffer of bytecode, followed by a lazyLocator.
-// The location of a JUMPDEST/Label changes the size of pushLabel{s} that refer
-// to it, but the location isn't known until preceding push types are
-// determined. A splice allows for lazy determination of locations.
+// The location of a tag changes the size of pushTags{s} that refer to it, but
+// the location isn't known until preceding pushTag{s} are determined. A splice
+// allows for lazy determination of locations.
 type splice struct {
 	buf bytes.Buffer
 	op  lazyLocator
-	// If op is itself the lazy location
+	// If tag
 	offset *int // Current estimate of offset in the bytecode, or nil if not yet estimated
-	// If op pushes the lazy location
-	labels   []*splice // Splice(s) of the respective JUMPDEST(s) or Label(s)
-	reserved int       // Number of bytes reserved (including the PUSH); 1 + (1 or 2) per dest
+	// If pushTag{s}
+	tags     []*splice // All have `op` field of type `tagged`
+	reserved int       // Number of bytes reserved (including the PUSH); 1 + (1 or 2) per tag
 }
 
-// bytesPerLabel returns an optimistic estimate of the number of the least
-// number of bytes needed to represent the largest s.labels.offset. If any
-// non-nil offset >= 256 then bytesPerLabel returns 2, otherwise it returns 1
-// (i.e. the optimistic element). This may change due to calls to
-// spliceConcat.expand.
-func (s *splice) bytesPerLabel() int {
-	for _, d := range s.labels {
+// bytesPerTag returns an optimistic estimate of theleast number of bytes needed
+// to represent the largest s.tags.offset. If any non-nil offset is >=256 then
+// bytesPerTag returns 2, otherwise it returns 1 (i.e. the optimistic element).
+// This may change due to calls to spliceConcat.expand.
+func (s *splice) bytesPerTag() int {
+	for _, d := range s.tags {
 		if d.offset != nil && *d.offset >= 256 {
 			return 2
 		}
@@ -50,7 +49,7 @@ func (s *splice) bytesPerLabel() int {
 }
 
 // extraBytesNeeded returns the number of bytes needed to represent the
-// lazyLocator of the splice.
+// lazyLocator of the splice, over and above the splice's buffer.
 func (s *splice) extraBytesNeeded() int {
 	switch s.op.(type) {
 	case nil: // final splice
@@ -59,13 +58,13 @@ func (s *splice) extraBytesNeeded() int {
 		return 0
 	}
 
-	return 1 + len(s.labels)*s.bytesPerLabel() - s.leadingZeroes()
+	return 1 + len(s.tags)*s.bytesPerTag() - s.leadingZeroes()
 }
 
 // leadingZeroes returns the number of bytes that PUSH() will strip from the
-// concatenated s.dests.offset values.
+// concatenated s.tags.offset values of pushTag{s}.
 func (s *splice) leadingZeroes() int {
-	if len(s.labels) == 0 {
+	if len(s.tags) == 0 {
 		return 0
 	}
 
@@ -73,9 +72,9 @@ func (s *splice) leadingZeroes() int {
 	// would have had to already happened (by nature of being) the very first
 	// opcode.
 
-	if s.bytesPerLabel() == 1 {
+	if s.bytesPerTag() == 1 {
 		var n int
-		for _, d := range s.labels {
+		for _, d := range s.tags {
 			if d.offset == nil || *d.offset != 0 {
 				break
 			}
@@ -84,9 +83,9 @@ func (s *splice) leadingZeroes() int {
 		return n
 	}
 
-	// bytesPerDest == 2
+	// bytesPerTag == 2
 	var n int
-	for _, d := range s.labels {
+	for _, d := range s.tags {
 		switch {
 		case d.offset == nil, *d.offset < 256:
 			return n + 1
@@ -101,10 +100,10 @@ func (s *splice) leadingZeroes() int {
 
 // A spliceConcat holds a set of sequential splices that are intended to be
 // concatenated to produce bytecode. Its reserve() and expand() methods
-// implement lazy instantiation of JUMPDEST and Label locations.
+// implement lazy instantiation of tag locations.
 type spliceConcat struct {
-	all    []*splice
-	labels map[string]*splice
+	all  []*splice
+	tags map[tag]*splice
 }
 
 // curr returns the last *splice in the spliceConcat.
@@ -123,11 +122,11 @@ func newSpliceBuffer(s *spliceConcat, op lazyLocator) (*bytes.Buffer, error) {
 	curr := s.curr()
 	curr.op = op
 
-	if l, ok := op.(label); ok {
-		if _, ok := s.labels[l.label()]; ok {
+	if l, ok := op.(tagged); ok {
+		if _, ok := s.tags[l.tag()]; ok {
 			return nil, fmt.Errorf("duplicate JUMPDEST/Label %q", op)
 		}
-		s.labels[l.label()] = curr
+		s.tags[l.tag()] = curr
 	}
 
 	s.all = append(s.all, new(splice))
@@ -155,8 +154,8 @@ func (c Code) Compile() ([]byte, error) {
 	flat := c.flatten()
 
 	splices := &spliceConcat{
-		all:    []*splice{new(splice)},
-		labels: make(map[string]*splice),
+		all:  []*splice{new(splice)},
+		tags: make(map[tag]*splice),
 	}
 	buf := &splices.all[0].buf
 
@@ -216,7 +215,8 @@ CodeLoop:
 			if err != nil {
 				return nil, err
 			}
-			if op.pushesLazyLocation() {
+			if _, ok := op.(tagged); !ok {
+				// Not a tag itself therefore must be pushing one to the stack.
 				stackDepth++
 			}
 
@@ -231,8 +231,8 @@ CodeLoop:
 			requireStackDepthSetting = true
 
 		case Label:
-		case pushLabel:
-		case pushLabels:
+		case pushTag:
+		case pushTags:
 
 		case Raw:
 			code, _ := use.Bytecode() // always returns nil error
@@ -275,14 +275,14 @@ CodeLoop:
 }
 
 // reserve performs a single pass over all splices, recording a best-case
-// offset for each JUMPDEST and Label. If a pushLabel refers to an already-seen
-// JUMPDEST/Label, either 1 or 2 bytes are reserved, based on said values's
-// recorded offset. If a pushLabel refers to a not-yet-seen JUMPDEST/Label, 1
-// byte is reserved as an optimistic estimate of the offset, which may be
-// increased by expand(). An extra byte is reserved for all `pushLabel`s for the
-// actual PUSH opcode. Similar logic applies to `pushLabels` as does to
-// `pushLabel`s except that 1 byte is reserved *per* JUMPDEST/Label unless *all*
-// have already been seen to be at or beyond the 256th byte.
+// offset for each tagged location. If a pushTag refers to an already-seen
+// tag, either 1 or 2 bytes are reserved, based on said tag's recorded offset.
+// If a pushTag refers to an unseen tag, 1 byte is reserved as an optimistic
+// estimate of the offset, which may be increased by expand(). An extra byte is
+// reserved for each `pushTag` for the actual PUSH opcode. Similar logic applies
+// to `pushTags` as does to individual `pushTag`s except that 1 byte is reserved
+// *per* tag unless *all* have already been seen to be at or beyond the 256th
+// byte.
 func (s *spliceConcat) reserve() error {
 	var pc int
 	for i, sp := range s.all {
@@ -297,21 +297,21 @@ func (s *spliceConcat) reserve() error {
 			x := pc
 			sp.offset = &x
 
-		case pushLabel:
-			d, ok := s.labels[string(op)]
+		case pushTag:
+			d, ok := s.tags[tag(op)]
 			if !ok {
 				return fmt.Errorf("%T(%q) without corresponding %T/%T", op, op, JUMPDEST(""), Label(""))
 			}
-			sp.labels = []*splice{d}
+			sp.tags = []*splice{d}
 
-		case pushLabels:
-			sp.labels = make([]*splice, len(op))
-			for i, lbl := range op {
-				d, ok := s.labels[string(lbl)]
+		case pushTags:
+			sp.tags = make([]*splice, len(op))
+			for i, tag := range op {
+				d, ok := s.tags[tag]
 				if !ok {
-					return fmt.Errorf("%T{…%q…} without corresponding %T/%T", op, lbl, JUMPDEST(""), Label(""))
+					return fmt.Errorf("%T{…%q…} without corresponding %T/%T", op, tag, JUMPDEST(""), Label(""))
 				}
-				sp.labels[i] = d
+				sp.tags[i] = d
 			}
 
 		case nil:
@@ -330,17 +330,16 @@ func (s *spliceConcat) reserve() error {
 	return nil
 }
 
-// expand performs one or more passes over all splices, finding `pushLabel`s and
-// `pushLabels` with too few reserved bytes. This occurs when the respective
-// JUMPDEST(s)/Label(s) were later in the code so their location(s) weren't yet
-// known by reserve(). Every time the number of reserved bytes must be
-// increased, an expansion counter is increased and later used on subsequent
-// JUMPDESTs/Labels to move them later in the code.
+// expand performs one or more passes over all splices, finding `pushTag`s and
+// `pushTags` with too few reserved bytes. This occurs when the respective
+// tagged locations were later in the code so their offset(s) weren't yet known
+// by reserve(). Every time the number of reserved bytes must be increased, an
+// expansion counter is increased and later used on subsequent tags to move them
+// later in the code.
 //
-// Note that pushLabel{s} splices have pointers to their respective
-// JUMPDEST/Label splices so there is no need to adjust them to account for
-// expansion. Only after expand() has returned will the pushed values be locked
-// in.
+// Note that pushTag{s} splices have pointers to the splices of their respective
+// tags so there is no need to adjust them to account for expansion. Only after
+// expand() has returned will the pushed values be locked in.
 //
 // expand() MUST NOT be called before s.reserve().
 //
@@ -374,8 +373,8 @@ func (s *spliceConcat) expand() error {
 	}
 }
 
-// bytes returns the concatenated splices, with concrete pushLabel{s} values. It
-// MUST NOT be called before s.reserve() and s.expand().
+// bytes returns the concatenated splices, with concrete pushTag{s} values. It
+// MUST NOT be called before s.reserve() nor s.expand().
 func (s *spliceConcat) bytes() ([]byte, error) {
 	code := new(bytes.Buffer)
 	for _, sp := range s.all {
@@ -394,12 +393,12 @@ func (s *spliceConcat) bytes() ([]byte, error) {
 
 		default:
 			// The leading zeroes will be stripped by PUSHBytes(), but we need
-			// them to simplifying the binary-encoding loop.
+			// them to simplify the binary-encoding loop.
 			full := make([]byte, sp.extraBytesNeeded()+sp.leadingZeroes()-1) // -1 because the PUSH is separate
 			buf := make([]byte, 8)
 
-			n := sp.bytesPerLabel()
-			for i, dest := range sp.labels {
+			n := sp.bytesPerTag()
+			for i, dest := range sp.tags {
 				binary.BigEndian.PutUint64(buf, uint64(*dest.offset))
 				copy(full[i*n:(i+1)*n], buf[8-n:])
 			}
