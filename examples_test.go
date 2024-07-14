@@ -484,6 +484,10 @@ func ExampleCode_sqrt() {
 }
 
 func ExamplePUSH_jumpTable() {
+	// This is a highly optimised factorial function, implementing one of the
+	// Curta gas-golfing (https://www.curta.wtf/golf/2) solutions by philogy.eth
+	// https://basescan.org/address/0x550d8df432706504b550c7cf93660cd362d7f95c
+
 	prod := func(start, end uint64) uint64 {
 		x := end
 		for i := start; i < end; i++ {
