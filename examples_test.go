@@ -645,6 +645,24 @@ func ExamplePUSH_jumpTable() {
 	// Output: 0x6004356001603a8210695d58524c453e37302820601660068504011a573d3dfd5b64045461b590025b64020ea2db80025b63e11fed20025b6353971500025b63197b6830025b6305c6b740025b62cbf340025b620a26c0025b6102d0025b658886807a746e601a60068406011a565b60048203025b60038203025b60028203025b60018203025b025b3d52593df3
 }
 
+func ExampleLabel() {
+	const size = Inverted(DUP1)
+
+	dataTable := Code{
+		Fn(SUB, CODESIZE, PUSH("data")), // size
+
+		Fn(CODECOPY, PUSH0, PUSH("data"), size),
+		Fn(RETURN, PUSH0 /* size already on stack */),
+
+		Label("data"), // not compiled into anything
+		Raw{'h', 'e', 'l', 'l', 'o'},
+	}
+
+	fmt.Println(string(compileAndRun(dataTable, []byte{})))
+
+	// Output: hello
+}
+
 func compileAndRun[T interface{ []byte | [32]byte }](code Code, callData T) []byte {
 	var slice []byte
 	switch c := any(callData).(type) {

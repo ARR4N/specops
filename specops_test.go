@@ -269,8 +269,8 @@ func TestNoCallBytecode(t *testing.T) {
 	for _, b := range []types.Bytecoder{
 		Code{},
 		JUMPDEST(""),
-		pushLabel(""),
-		pushLabels{},
+		pushTag(""),
+		pushTags{},
 		stack.ExpectDepth(0),
 		stack.SetDepth(0),
 		Inverted(0),
