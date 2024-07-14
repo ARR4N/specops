@@ -8,7 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/holiman/uint256"
 
-	"github.com/solidifylabs/specops/jump"
 	"github.com/solidifylabs/specops/stack"
 )
 
@@ -541,7 +540,7 @@ func ExamplePUSH_jumpTable() {
 
 		JUMPDEST("no-range-mul"), stack.SetDepth(2),
 	}
-	ranges := jump.Table{
+	ranges := []string{
 		"no-range-mul",
 		"1:6",
 		"7:12",
@@ -583,7 +582,7 @@ func ExamplePUSH_jumpTable() {
 
 		JUMPDEST("no-remainder-mul"), stack.SetDepth(2),
 	}
-	remainders := jump.Table{
+	remainders := []string{
 		"no-remainder-mul",
 		"sub0",
 		"sub1",

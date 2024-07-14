@@ -1,16 +1,14 @@
-package jump_test
+package specops
 
 import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/google/go-cmp/cmp"
-	. "github.com/solidifylabs/specops"
-	"github.com/solidifylabs/specops/jump"
 	"github.com/solidifylabs/specops/stack"
 )
 
-func TestPushTable(t *testing.T) {
+func TestPUSHLabels(t *testing.T) {
 	code := Code{
 		JUMPDEST("0"), stack.SetDepth(0),
 		JUMPDEST("1"), stack.SetDepth(0),
@@ -18,7 +16,7 @@ func TestPushTable(t *testing.T) {
 		make(Raw, 18), // ...19
 
 		JUMPDEST("20"), stack.SetDepth(0),
-		PUSH(jump.Table{"1", "20", "0"}), // 21, 22, 23, 24
+		PUSH([]string{"1", "20", "0"}), // 21, 22, 23, 24
 		JUMPDEST("25"), stack.SetDepth(0),
 
 		make(Raw, 25), // ...50
@@ -29,20 +27,20 @@ func TestPushTable(t *testing.T) {
 
 		make(Raw, 5), // ...60
 
-		PUSH(jump.Table{"20", "25", "100"}), // 61, 62, 63, 64
+		PUSH([]string{"20", "25", "100"}), // 61, 62, 63, 64
 
 		make(Raw, 35), // ...99
 
 		JUMPDEST("100"), stack.SetDepth(0),
-		PUSH("255"),                   // 101, 102
-		PUSH(jump.Table{"255"}),       // 103,104
-		PUSH(jump.Table{"255", "51"}), // 105, 106, 107
-		PUSH("261"),                   // 108, [109, 110]
-		PUSH(jump.Table{"261"}),       // 111, [112, 113]
+		PUSH("255"),                 // 101, 102
+		PUSH([]string{"255"}),       // 103,104
+		PUSH([]string{"255", "51"}), // 105, 106, 107
+		PUSH("261"),                 // 108, [109, 110]
+		PUSH([]string{"261"}),       // 111, [112, 113]
 
 		// Although all must be the same size, leading zeroes are still stripped
-		PUSH(jump.Table{"51", "261"}), // 114, [115], [116, 117]
-		PUSH(jump.Table{"261", "51"}), // 118, [119, 120], [121, 122]
+		PUSH([]string{"51", "261"}), // 114, [115], [116, 117]
+		PUSH([]string{"261", "51"}), // 118, [119, 120], [121, 122]
 
 		make(Raw, 132), // ...254
 

@@ -27,7 +27,6 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//evmdebug",
-        "//jump",
         "//runopts",
         "//stack",
         "//types",
@@ -43,6 +42,7 @@ go_test(
     name = "specops_test",
     srcs = [
         "examples_test.go",
+        "pushlabels_test.go",
         "specops_test.go",
     ],
     embed = [":specops"],

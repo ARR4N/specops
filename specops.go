@@ -18,7 +18,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/holiman/uint256"
 
-	"github.com/solidifylabs/specops/jump"
 	"github.com/solidifylabs/specops/types"
 )
 
@@ -62,15 +61,33 @@ func (r Raw) Bytecode() ([]byte, error) {
 	return []byte(r), nil
 }
 
-// Aliases of jump.* types that naturally read as opcodes so should be exported
-// here. They are, however, implemented in the jump package as that's where all
-// related functionality lives.
-type (
-	// JUMPDEST is an alias of jump.Dest.
-	JUMPDEST = jump.Dest
-	// PUSHJUMPDEST is an alias of jump.PushDest.
-	PUSHJUMPDEST = jump.PushDest
-)
+// A JUMPDEST is a Bytecoder that is converted into a vm.JUMPDEST while also
+// storing its location in the bytecode for use via
+// PUSH[string|JUMPDEST](<lbl>).
+type JUMPDEST string
+
+// Bytecode always returns an error as JUMPDEST values have special handling
+// inside Code.Compile().
+func (j JUMPDEST) Bytecode() ([]byte, error) {
+	return nil, fmt.Errorf("direct call to %T.Bytecode()", j)
+}
+
+// A pushLabel pushes the respective JUMPDEST to the stack.
+// TODO(arr4n): expand this to support arbitrary labels and the offset
+// difference between them (i.e. size of a block).
+type pushLabel string
+
+func (p pushLabel) Bytecode() ([]byte, error) {
+	return nil, fmt.Errorf("direct call to %T.Bytecode()", p)
+}
+
+// A pushLabels is the multi-label equivalent of pushLabel. It can be used, for
+// example, for pushing jump tables.
+type pushLabels []string
+
+func (p pushLabels) Bytecode() ([]byte, error) {
+	return nil, fmt.Errorf("direct call to %T.Bytecode()", p)
+}
 
 // PUSHSelector returns a PUSH4 Bytecoder that pushes the selector of the
 // signature, i.e. `sha3(sig)[:4]`.
@@ -90,9 +107,10 @@ type bytesPusher []byte
 func (p bytesPusher) ToPush() []byte { return []byte(p) }
 
 // PUSH returns a PUSH<n> Bytecoder appropriate for the type. It panics if v is
-// negative. A string is equivalent to PUSHJUMPDEST(v).
+// negative. A string refers to the respective JUMPDEST while a []string refers
+// to a concatenation of the same (i.e. a JUMP table).
 func PUSH[P interface {
-	int | uint64 | common.Address | uint256.Int | byte | []byte | JUMPDEST | string | jump.Table
+	int | uint64 | common.Address | uint256.Int | byte | []byte | JUMPDEST | string | []string
 }](v P,
 ) types.Bytecoder {
 	pToB := types.BytecoderFromStackPusher
@@ -120,13 +138,13 @@ func PUSH[P interface {
 		return pToB(wordPusher(v))
 
 	case string:
-		return PUSHJUMPDEST(v)
+		return pushLabel(v)
 
 	case JUMPDEST:
-		return PUSHJUMPDEST(v)
+		return pushLabel(v)
 
-	case jump.Table:
-		return tablePusher(v)
+	case []string:
+		return pushLabels(v)
 
 	default:
 		panic(fmt.Sprintf("no type-switch for %T", v))
@@ -159,13 +177,3 @@ func (p wordPusher) ToPush() []byte {
 type addressPusher common.Address
 
 func (p addressPusher) ToPush() []byte { return p[:] }
-
-// A tablePusher is a multi-JUMPDEST equivalent of PUSHJUMPDEST, with special
-// handling by Code.Compile().
-type tablePusher jump.Table
-
-// Bytecode always returns an error as tablePusher values have special handling
-// inside Code.Compile().
-func (p tablePusher) Bytecode() ([]byte, error) {
-	return nil, fmt.Errorf("direct call to %T.Bytecode()", p)
-}
