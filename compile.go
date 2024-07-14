@@ -261,16 +261,15 @@ CodeLoop:
 	return splices.bytes()
 }
 
-// reserve performs a single pass over all splices, recording a worst-case
+// reserve performs a single pass over all splices, recording a best-case
 // offset for each JUMPDEST. If a PUSHJUMPDEST refers to an already-seen
 // JUMPDEST, either 1 or 2 bytes are reserved, based on said JUMPDEST's
-// recorded offset. If a PUSHJUMPDEST refers to a not-yet-seen JUMPDEST, 2 bytes
-// are reserved as the JUMPDEST's offset may be beyond the 256th byte. Two bytes
-// are sufficient to record any position in 64KiB (larger than all possible
-// contracts). An extra byte is reserved for all PUSHJUMPDESTs for the actual
-// PUSH opcode. Similar logic applies to tablePushers as does to PUSHJUMPDESTs
-// except that 2 bytes are reserved *per* JUMPDEST unless *all* have already
-// been seen.
+// recorded offset. If a PUSHJUMPDEST refers to a not-yet-seen JUMPDEST, 1 byte
+// is reserved as an optimistic estimate of the JUMPDEST's offset, which may be
+// increased by expand(). An extra byte is reserved for all PUSHJUMPDESTs for
+// the actual PUSH opcode. Similar logic applies to tablePushers as does to
+// PUSHJUMPDESTs except that 1 byte is reserved *per* JUMPDEST unless *all* have
+// already been seen to be at or beyond the 256th byte.
 func (s *spliceConcat) reserve() error {
 	var pc int
 	for i, sp := range s.all {
@@ -316,7 +315,7 @@ func (s *spliceConcat) reserve() error {
 // JUMPDEST(s) were later in the code so their location(s) weren't yet known by
 // reserve(). Every time the number of reserved bytes must be increased, an
 // expansion counter is increased and later used on subsequent JUMPDESTs to move
-// them back in the code.
+// them later in the code.
 //
 // Note that PUSHJUMPDEST and tablePusher splices have pointers to their
 // respective JUMPDEST splices so there is no need to adjust them to account for
@@ -356,8 +355,7 @@ func (s *spliceConcat) expand() error {
 }
 
 // bytes returns the concatenated splices, with concrete PUSHJUMPDEST and
-// tablePluser values. It SHOULD NOT be called before s.expand() and MUST NOT be
-// called before s.reserve().
+// tablePluser values. It MUST NOT be called before s.reserve() and s.expand().
 func (s *spliceConcat) bytes() ([]byte, error) {
 	code := new(bytes.Buffer)
 	for _, sp := range s.all {
