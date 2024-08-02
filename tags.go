@@ -71,7 +71,7 @@ var _ = asPushTags[tag]
 
 // PUSHSize pushes abs(loc(a),loc(b)), i.e. the size of the bytecode between the
 // corresponding JUMPDEST(s) / Label(s).
-func PUSHSize[T ~string](a, b T) types.Bytecoder {
+func PUSHSize[T ~string, U ~string](a T, b U) types.Bytecoder {
 	return pushSize{tag(a), tag(b)}
 }
 
