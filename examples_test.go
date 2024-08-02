@@ -649,18 +649,19 @@ func ExampleLabel() {
 	const size = Inverted(DUP1)
 
 	dataTable := Code{
-		Fn(SUB, CODESIZE, PUSH("data")), // size
+		PUSHSize("data", "end"), // calculated during compilation
 
 		Fn(CODECOPY, PUSH0, PUSH("data"), size),
 		Fn(RETURN, PUSH0 /* size already on stack */),
 
 		Label("data"), // not compiled into anything
-		Raw{'h', 'e', 'l', 'l', 'o'},
+		Raw("hello world"),
+		Label("end"),
 	}
 
 	fmt.Println(string(compileAndRun(dataTable, []byte{})))
 
-	// Output: hello
+	// Output: hello world
 }
 
 func compileAndRun[T interface{ []byte | [32]byte }](code Code, callData T) []byte {

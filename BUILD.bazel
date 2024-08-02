@@ -45,6 +45,7 @@ go_test(
         "examples_test.go",
         "pushlabels_test.go",
         "specops_test.go",
+        "tags_test.go",
     ],
     embed = [":specops"],
     deps = [

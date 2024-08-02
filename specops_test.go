@@ -271,6 +271,7 @@ func TestNoCallBytecode(t *testing.T) {
 		JUMPDEST(""),
 		pushTag(""),
 		pushTags{},
+		pushSize{},
 		stack.ExpectDepth(0),
 		stack.SetDepth(0),
 		Inverted(0),
