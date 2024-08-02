@@ -13,7 +13,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math/bits"
-	"reflect"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
