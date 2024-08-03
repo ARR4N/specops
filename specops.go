@@ -13,6 +13,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math/bits"
+	"reflect"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -86,6 +87,10 @@ func PUSH[P interface {
 }](v P,
 ) types.Bytecoder {
 	pToB := types.BytecoderFromStackPusher
+
+	if val := reflect.ValueOf(v); val.Kind() == reflect.Slice && val.Len() == 0 {
+		return Raw{}
+	}
 
 	switch v := any(v).(type) {
 	case int:
