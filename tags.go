@@ -68,3 +68,15 @@ func asPushTags[T ~string](xs []T) pushTags {
 // Compile-time guarantee that tag itself has the same underlying type as those
 // accepted by the generic function.
 var _ = asPushTags[tag]
+
+// PUSHSize pushes abs(loc(a),loc(b)), i.e. the size of the bytecode between the
+// corresponding JUMPDEST(s) / Label(s).
+func PUSHSize[T ~string, U ~string](a T, b U) types.Bytecoder {
+	return pushSize{tag(a), tag(b)}
+}
+
+type pushSize [2]tag
+
+func (p pushSize) Bytecode() ([]byte, error) {
+	return nil, fmt.Errorf("direct call to %T.Bytecode()", p)
+}

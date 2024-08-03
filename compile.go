@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"math"
 
 	"github.com/ethereum/go-ethereum/core/vm"
 
@@ -20,6 +21,7 @@ func (JUMPDEST) lazy() {}
 func (Label) lazy()    {}
 func (pushTag) lazy()  {}
 func (pushTags) lazy() {}
+func (pushSize) lazy() {}
 
 // A splice is a (possibly empty) buffer of bytecode, followed by a lazyLocator.
 // The location of a tag changes the size of pushTags{s} that refer to it, but
@@ -35,30 +37,91 @@ type splice struct {
 	reserved int       // Number of bytes reserved (including the PUSH); 1 + (1 or 2) per tag
 }
 
-// bytesPerTag returns an optimistic estimate of theleast number of bytes needed
-// to represent the largest s.tags.offset. If any non-nil offset is >=256 then
-// bytesPerTag returns 2, otherwise it returns 1 (i.e. the optimistic element).
-// This may change due to calls to spliceConcat.expand.
+// setTags populates splice.tags with the each of the `tags`, sourced from the
+// `known` set.
+func (s *splice) setTags(known map[tag]*splice, tags ...tag) error {
+	var wantN int
+	switch s.op.(type) {
+	case pushTag: // singular
+		wantN = 1
+	case pushTags: // plural
+		wantN = len(tags)
+	case pushSize:
+		wantN = 2
+	default:
+		return fmt.Errorf("BUG: %T.setTags() with unsupported %T op", s, s.op)
+	}
+	if n := len(tags); n != wantN {
+		return fmt.Errorf("BUG: %T.setTags() with %T op; got %d tags; MUST be %d", s, s.op, n, wantN)
+	}
+
+	s.tags = make([]*splice, len(tags))
+	for i, t := range tags {
+		k, ok := known[t]
+		if !ok {
+			return fmt.Errorf("%T{…%q…} without corresponding %T/%T", s.op, tags, JUMPDEST(""), Label(""))
+		}
+		s.tags[i] = k
+	}
+	return nil
+}
+
+// bytesPerTag returns an optimistic estimate of the least number of bytes
+// needed to represent the largest s.tags.offset. If any non-nil offset is >=256
+// then bytesPerTag returns 2, otherwise it returns 1 (i.e. the optimistic
+// element). This may change due to calls to spliceConcat.expand.
 func (s *splice) bytesPerTag() int {
-	for _, d := range s.tags {
-		if d.offset != nil && *d.offset >= 256 {
+	if _, ok := s.op.(pushSize); ok {
+		// If this happens then there's a broken invariant; this is never
+		// expected to happen in production code so a panic is ok per:
+		// https://google.github.io/styleguide/go/best-practices#when-to-panic
+		panic(fmt.Sprintf("BUG: %T.bytesPerTag() with %T; use bytesForSize()", s, pushSize{}))
+	}
+
+	for _, t := range s.tags {
+		if t.offset != nil && *t.offset >= 256 {
 			return 2
 		}
 	}
 	return 1
 }
 
+// bytesForSize is the equivalent of bytesPerTag(), assuming s.op is a pushSize.
+// Instead of performing calculations based on a tag offset, it uses the
+// absolute difference between the two.
+func (s *splice) bytesForSize() int {
+	if _, ok := s.op.(pushSize); !ok {
+		// See rationale in bytesPerTag().
+		panic(fmt.Sprintf("BUG: %T.bytesPerSize() with %T; use bytesForTag()", s, pushSize{}))
+	} else if n := len(s.tags); n != 2 {
+		panic(fmt.Sprintf("BUG: %T.bytesPerSize() with %d tags; MUST be 2", s, n))
+	}
+
+	t0, t1 := s.tags[0].offset, s.tags[1].offset
+	if t0 != nil && t1 != nil && absDiff(*t0, *t1) >= 256 {
+		return 2
+	}
+	return 1
+}
+
 // extraBytesNeeded returns the number of bytes needed to represent the
-// lazyLocator of the splice, over and above the splice's buffer.
+// lazyLocator of the splice, over and above the splice's buffer. This includes
+// the single byte for the actual PUSHn opcode.
 func (s *splice) extraBytesNeeded() int {
 	switch s.op.(type) {
 	case nil: // final splice
 		return 0
+
 	case Label:
 		return 0
+
+	case pushSize:
+		return 1 + s.bytesForSize() - s.leadingZeroes()
+
+	default:
+		return 1 + len(s.tags)*s.bytesPerTag() - s.leadingZeroes()
 	}
 
-	return 1 + len(s.tags)*s.bytesPerTag() - s.leadingZeroes()
 }
 
 // leadingZeroes returns the number of bytes that PUSH() will strip from the
@@ -68,14 +131,37 @@ func (s *splice) leadingZeroes() int {
 		return 0
 	}
 
-	// In all cases, if d.offset is nil, it can never be set to 0 because that
+	if _, ok := s.op.(pushSize); ok {
+		n := s.bytesForSize()
+		t0 := s.tags[0].offset
+		t1 := s.tags[1].offset
+
+		switch {
+		case t0 == nil || t1 == nil || *t0 == *t1:
+			return n
+
+		case n == 1:
+			return 0
+
+		case n == 2:
+			if absDiff(*t0, *t1) < 256 {
+				return 1
+			}
+			return 0
+		}
+
+		// See rationale for panic in bytesForTag().
+		panic(fmt.Sprintf("BUG: unsupported branch in %T.leadingZeroes() for %T op", s, s.op))
+	}
+
+	// In all cases, if t.offset is nil, it can never be set to 0 because that
 	// would have had to already happened (by nature of being) the very first
 	// opcode.
 
 	if s.bytesPerTag() == 1 {
 		var n int
-		for _, d := range s.tags {
-			if d.offset == nil || *d.offset != 0 {
+		for _, t := range s.tags {
+			if t.offset == nil || *t.offset != 0 {
 				break
 			}
 			n++
@@ -85,11 +171,11 @@ func (s *splice) leadingZeroes() int {
 
 	// bytesPerTag == 2
 	var n int
-	for _, d := range s.tags {
+	for _, t := range s.tags {
 		switch {
-		case d.offset == nil, *d.offset < 256:
+		case t.offset == nil, *t.offset < 256:
 			return n + 1
-		case *d.offset == 0:
+		case *t.offset == 0:
 			n += 2
 		default:
 			return n
@@ -102,16 +188,16 @@ func (s *splice) leadingZeroes() int {
 // concatenated to produce bytecode. Its reserve() and expand() methods
 // implement lazy instantiation of tag locations.
 type spliceConcat struct {
-	all  []*splice
-	tags map[tag]*splice
+	splices []*splice
+	allTags map[tag]*splice
 }
 
 // curr returns the last *splice in the spliceConcat.
 func (s *spliceConcat) curr() *splice {
-	if len(s.all) == 0 {
+	if len(s.splices) == 0 {
 		return nil
 	}
-	return s.all[len(s.all)-1]
+	return s.splices[len(s.splices)-1]
 }
 
 // newSpliceBuffer pushes a new *splice to the spliceConcat and returns its
@@ -123,13 +209,13 @@ func newSpliceBuffer(s *spliceConcat, op lazyLocator) (*bytes.Buffer, error) {
 	curr.op = op
 
 	if l, ok := op.(tagged); ok {
-		if _, ok := s.tags[l.tag()]; ok {
+		if _, ok := s.allTags[l.tag()]; ok {
 			return nil, fmt.Errorf("duplicate JUMPDEST/Label %q", op)
 		}
-		s.tags[l.tag()] = curr
+		s.allTags[l.tag()] = curr
 	}
 
-	s.all = append(s.all, new(splice))
+	s.splices = append(s.splices, new(splice))
 	return &s.curr().buf, nil
 }
 
@@ -154,10 +240,10 @@ func (c Code) Compile() ([]byte, error) {
 	flat := c.flatten()
 
 	splices := &spliceConcat{
-		all:  []*splice{new(splice)},
-		tags: make(map[tag]*splice),
+		splices: []*splice{new(splice)},
+		allTags: make(map[tag]*splice),
 	}
-	buf := &splices.all[0].buf
+	buf := &splices.splices[0].buf
 
 	var (
 		stackDepth               uint
@@ -210,11 +296,12 @@ CodeLoop:
 			}
 
 		case lazyLocator:
-			var err error
-			buf, err = newSpliceBuffer(splices, op)
+			b, err := newSpliceBuffer(splices, op)
 			if err != nil {
 				return nil, err
 			}
+			buf = b
+
 			if _, ok := op.(tagged); !ok {
 				// Not a tag itself therefore must be pushing one to the stack.
 				stackDepth++
@@ -230,9 +317,7 @@ CodeLoop:
 		case JUMPDEST:
 			requireStackDepthSetting = true
 
-		case Label:
-		case pushTag:
-		case pushTags:
+		case lazyLocator:
 
 		case Raw:
 			code, _ := use.Bytecode() // always returns nil error
@@ -285,37 +370,31 @@ CodeLoop:
 // byte.
 func (s *spliceConcat) reserve() error {
 	var pc int
-	for i, sp := range s.all {
+	for i, sp := range s.splices {
 		pc += sp.buf.Len()
 
 		switch op := sp.op.(type) {
-		case JUMPDEST:
-			x := pc
-			sp.offset = &x
-
-		case Label:
+		case tagged: // JUMPDEST or Label
 			x := pc
 			sp.offset = &x
 
 		case pushTag:
-			d, ok := s.tags[tag(op)]
-			if !ok {
-				return fmt.Errorf("%T(%q) without corresponding %T/%T", op, op, JUMPDEST(""), Label(""))
+			if err := sp.setTags(s.allTags, tag(op)); err != nil {
+				return err
 			}
-			sp.tags = []*splice{d}
 
 		case pushTags:
-			sp.tags = make([]*splice, len(op))
-			for i, tag := range op {
-				d, ok := s.tags[tag]
-				if !ok {
-					return fmt.Errorf("%T{…%q…} without corresponding %T/%T", op, tag, JUMPDEST(""), Label(""))
-				}
-				sp.tags[i] = d
+			if err := sp.setTags(s.allTags, op...); err != nil {
+				return err
+			}
+
+		case pushSize:
+			if err := sp.setTags(s.allTags, op[0], op[1]); err != nil {
+				return err
 			}
 
 		case nil:
-			if i+1 != len(s.all) {
+			if i+1 != len(s.splices) {
 				return fmt.Errorf("BUG: %T with nil op MUST be last", sp)
 			}
 
@@ -350,9 +429,9 @@ func (s *spliceConcat) reserve() error {
 func (s *spliceConcat) expand() error {
 	for {
 		expand := 0
-		for _, sp := range s.all {
+		for _, sp := range s.splices {
 			switch sp.op.(type) {
-			case JUMPDEST:
+			case tagged:
 				*sp.offset += expand
 
 			case nil:
@@ -377,19 +456,32 @@ func (s *spliceConcat) expand() error {
 // MUST NOT be called before s.reserve() nor s.expand().
 func (s *spliceConcat) bytes() ([]byte, error) {
 	code := new(bytes.Buffer)
-	for _, sp := range s.all {
+	for _, sp := range s.splices {
 		if _, err := sp.buf.WriteTo(code); err != nil {
 			// This should be impossible, but ignoring the error angers the
 			// linter.
 			return nil, fmt.Errorf("%T.bytes(): %T.buf.WriteTo(%T): %v", s, sp, code, err)
 		}
 
-		switch sp.op.(type) {
+		switch op := sp.op.(type) {
 		case JUMPDEST:
 			code.WriteByte(byte(vm.JUMPDEST))
 
 		case Label: // purely for labelling, not adding to the code
 		case nil: // last splice
+
+		case pushSize:
+			diff := uint64(absDiff(*sp.tags[0].offset, *sp.tags[1].offset))
+			if diff > math.MaxUint16 {
+				// A contract this large couldn't be deployed (at least on Mainnet)
+				return nil, fmt.Errorf("pushing size between %q and %q; %d can't be represented with 2 bytes", op[0], op[1], diff)
+			}
+
+			bc, err := PUSHBytes(byte(diff>>8), byte(diff)).Bytecode()
+			if err != nil {
+				return nil, fmt.Errorf("pushing size %d between %q and %q: %v", diff, op[0], op[1], err)
+			}
+			code.Write(bc)
 
 		default:
 			// The leading zeroes will be stripped by PUSHBytes(), but we need
@@ -398,8 +490,8 @@ func (s *spliceConcat) bytes() ([]byte, error) {
 			buf := make([]byte, 8)
 
 			n := sp.bytesPerTag()
-			for i, dest := range sp.tags {
-				binary.BigEndian.PutUint64(buf, uint64(*dest.offset))
+			for i, tag := range sp.tags {
+				binary.BigEndian.PutUint64(buf, uint64(*tag.offset))
 				copy(full[i*n:(i+1)*n], buf[8-n:])
 			}
 
@@ -411,6 +503,15 @@ func (s *spliceConcat) bytes() ([]byte, error) {
 		}
 	}
 	return code.Bytes(), nil
+}
+
+func absDiff(i, j int) int {
+	switch d := i - j; {
+	case d < 0:
+		return -d
+	default:
+		return d
+	}
 }
 
 func min(a, b uint) uint {

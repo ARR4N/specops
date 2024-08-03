@@ -34,6 +34,7 @@ New features will be prioritised based on demand. If there's something you'd lik
 - [x] `PUSH(JUMPDEST)` by label with minimal bytes (1 or 2)
 - [x] `Label` tags; like `JUMPDEST` but don't add to code
 - [x] Push multiple, concatenated `JUMPDEST` / `Label` tags as one word
+- [x] `PUSHSize(T,T)` pushes `Label` and/or `JUMPDEST` distance
 - [x] Function-like syntax (i.e. Reverse Polish Notation is optional)
 - [x] Inverted `DUP`/`SWAP` special opcodes from "bottom" of stack (a.k.a. pseudo-variables)
 - [x] `PUSH<T>` for native Go types
