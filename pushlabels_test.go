@@ -142,6 +142,34 @@ func TestPUSHLabels(t *testing.T) {
 	// t.Logf("want: %d %#x", len(want), want)
 }
 
+func TestPUSHNoLabels(t *testing.T) {
+	// Arbitrary boundaries to surround the empty push; MUST have no effect on
+	// the stack otherwise compilation will fail.
+	const (
+		before = MSIZE
+		after  = GAS
+	)
+
+	code := Code{
+		before,
+		PUSH([]JUMPDEST{}),
+		PUSH([]Label{}),
+		PUSH([]string{}),
+		after,
+	}
+	want := asBytes(before, after)
+
+	t.Logf("%T = {%s, PUSH([]JUMPDEST{}, []Label{}, []string), %s}", code, before, after)
+
+	got, err := code.Compile()
+	if err != nil {
+		t.Fatalf("%T.Compile() error %v", code, err)
+	}
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("%T.Compile() diff (-want +got):\n%s", code, diff)
+	}
+}
+
 type opCode interface {
 	vm.OpCode | types.OpCode
 }
