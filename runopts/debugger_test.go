@@ -142,7 +142,7 @@ func TestDebuggerErrors(t *testing.T) {
 					name: fmt.Sprintf("%T.StartDebugging() results function", dbg),
 					err: func() error {
 						_, err := results()
-						return vm.VMErrorFromErr(errors.Unwrap(err))
+						return vm.VMErrorFromErr(err)
 					}(),
 				},
 			}
