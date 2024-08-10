@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"reflect"
 	"strings"
 	"testing"
 
@@ -89,37 +88,37 @@ func TestDebuggerCompilationError(t *testing.T) {
 
 func TestDebuggerErrors(t *testing.T) {
 	tests := []struct {
-		name        string
-		code        Code
-		wantErrType reflect.Type // errors.As doesn't play nicely with any/error
+		name          string
+		code          Code
+		wantVMErrCode int
 	}{
 		{
 			name: "immediate underflow",
 			code: Code{
 				stack.SetDepth(2), RETURN, // compiles to {RETURN}
 			},
-			wantErrType: reflect.TypeOf(new(vm.ErrStackUnderflow)),
+			wantVMErrCode: vm.VMErrorCodeStackUnderflow,
 		},
 		{
 			name: "delayed underflow",
 			code: Code{
 				PUSH0, stack.SetDepth(2), RETURN, // compiles to {PUSH0, RETURN}
 			},
-			wantErrType: reflect.TypeOf(new(vm.ErrStackUnderflow)),
+			wantVMErrCode: vm.VMErrorCodeStackUnderflow,
 		},
 		{
 			name: "invalid opcode",
 			code: Code{
 				Raw{byte(INVALID)},
 			},
-			wantErrType: reflect.TypeOf(new(vm.ErrInvalidOpCode)),
+			wantVMErrCode: vm.VMErrorCodeInvalidOpCode,
 		},
 		{
 			name: "explicit revert",
 			code: Code{
 				Fn(REVERT, PUSH0, PUSH0),
 			},
-			wantErrType: reflect.TypeOf(errors.New("")),
+			wantVMErrCode: vm.VMErrorCodeExecutionReverted,
 		},
 	}
 
@@ -131,11 +130,34 @@ func TestDebuggerErrors(t *testing.T) {
 			}
 			dbg.FastForward()
 
-			if err := dbg.State().Err; reflect.TypeOf(err) != tt.wantErrType {
-				t.Errorf("%T.State().Err = %T(%v); want type %v", dbg, err, err, tt.wantErrType)
+			errs := []struct {
+				name string
+				err  error
+			}{
+				{
+					name: fmt.Sprintf("%T.State().Err", dbg),
+					err:  dbg.State().Err,
+				},
+				{
+					name: fmt.Sprintf("%T.StartDebugging() results function", dbg),
+					err: func() error {
+						_, err := results()
+						return vm.VMErrorFromErr(errors.Unwrap(err))
+					}(),
+				},
 			}
-			if _, err := results(); reflect.TypeOf(errors.Unwrap(err)) != tt.wantErrType {
-				t.Errorf("%T.StartDebugging() results function returned error %T(%v); want type %v wrapped", dbg, err, err, tt.wantErrType)
+
+			for _, e := range errs {
+				t.Run(e.name, func(t *testing.T) {
+					err := e.err
+					vmErr := new(vm.VMError)
+					if !errors.As(err, &vmErr) || vmErr.ErrorCode() != tt.wantVMErrCode {
+						t.Errorf("err = %T(%v); want %T with ErrorCode() = %d", err, err, vmErr, tt.wantVMErrCode)
+						if errors.Is(err, vmErr) {
+							t.Logf("got %T.ErrorCode() = %d", vmErr, vmErr.ErrorCode())
+						}
+					}
+				})
 			}
 		})
 	}

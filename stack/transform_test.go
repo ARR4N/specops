@@ -280,11 +280,10 @@ func stackTest(dbg *evmdebug.Debugger, want8 []uint8) func(*testing.T) {
 		}
 
 		var got []uint64
-		stack := st.ScopeContext.Stack
-		for i, n := 0, len(stack.Data()); i < n; i++ {
-			g := stack.Back(i)
+		for i, n := 0, len(st.Context.StackData()); i < n; i++ {
+			g := st.StackBack(i)
 			if !g.IsUint64() {
-				t.Fatalf("%T.State().ScopeContext.Stack.Data()[%d] not representable as uint64", dbg, i)
+				t.Fatalf("%T.State().StackBack(%d) not representable as uint64", dbg, i)
 			}
 			got = append(got, g.Uint64())
 		}
