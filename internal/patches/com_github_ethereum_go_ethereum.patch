@@ -23,8 +23,8 @@
      copts = [
 -        "-Icrypto/secp256k1/libsecp256k1",
 -        "-Icrypto/secp256k1/libsecp256k1/src",
-+        "-Iexternal/gazelle~0.35.0~go_deps~com_github_ethereum_go_ethereum/crypto/secp256k1/libsecp256k1",
-+        "-Iexternal/gazelle~0.35.0~go_deps~com_github_ethereum_go_ethereum/crypto/secp256k1/libsecp256k1/src",
++        "-Iexternal/gazelle~0.37.0~go_deps~com_github_ethereum_go_ethereum/crypto/secp256k1/libsecp256k1",
++        "-Iexternal/gazelle~0.37.0~go_deps~com_github_ethereum_go_ethereum/crypto/secp256k1/libsecp256k1/src",
      ],
      importpath = "github.com/ethereum/go-ethereum/crypto/secp256k1",
      visibility = ["//visibility:public"],

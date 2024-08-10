@@ -1,6 +1,6 @@
-load("@rules_go//go:def.bzl", "go_library", "go_test")
-load("@gazelle//:def.bzl", "gazelle")
 load("@aspect_bazel_lib//lib:write_source_files.bzl", "write_source_files")
+load("@gazelle//:def.bzl", "gazelle")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 # No need for gazelle:prefix as it reads from go.mod
 gazelle(
