@@ -6,7 +6,9 @@ package evmdebug
 import (
 	"context"
 
+	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/core/vm"
+	"github.com/holiman/uint256"
 	"github.com/solidifylabs/specops/internal/sync"
 )
 
@@ -71,8 +73,11 @@ type Debugger struct {
 // Tracer returns an EVMLogger that enables debugging, compatible with geth.
 //
 // TODO: add an example demonstrating how to access vm.Config.
-func (d *Debugger) Tracer() vm.EVMLogger {
-	return d.d
+func (d *Debugger) Tracer() *tracing.Hooks {
+	return &tracing.Hooks{
+		OnOpcode: d.d.onOpCode,
+		OnFault:  d.d.onFault,
+	}
 }
 
 // Wait blocks until Debugger is blocking the EVM from running the next opcode.
@@ -114,7 +119,7 @@ func (d *Debugger) close(closeFastForward bool) {
 // Step MUST NOT be called after Done() returns true.
 func (d *Debugger) Step() {
 	d.step <- step{}
-	// CaptureState will either close d.done or toggle (off) and block d.Wait().
+	// onOpCode will either close d.done or toggle (off) and block d.Wait().
 	// In both cases it performs the action *before* closing / sending on
 	// this channel, so the checks in the select{} block are synchronised.
 	<-d.stepped
@@ -186,24 +191,29 @@ func (d *Debugger) State() *CapturedState {
 type CapturedState struct {
 	PC, GasLeft, GasCost uint64
 	Op                   vm.OpCode
-	ScopeContext         *vm.ScopeContext // contains memory and stack ;)
+	Context              tracing.OpContext // contains memory and stack ;)
 	ReturnData           []byte
 	Err                  error
+}
+
+// StackBack returns the n'th item in the captured stack; equivalent to
+// [vm.Stack.Back].
+func (s *CapturedState) StackBack(n int) uint256.Int {
+	d := s.Context.StackData()
+	return d[len(d)-n-1]
 }
 
 // debugger implements vm.EVMLogger and is injected by its parent Debugger to
 // intercept opcode execution.
 type debugger struct {
-	vm.EVMLogger // no need for most methods so just embed the interface
-
-	// Waited upon by Capture{State,Fault}(), signalling an external call to
-	// Step() or FastForward().
+	// Waited upon by on{OpCode,Fault}(), signalling an external call to Step()
+	// or FastForward().
 	step        <-chan step
 	fastForward <-chan fastForward
 	stepped     chan<- stepped
-	// Toggled by Capture{State,Fault}(), externally signalling that the next
-	// opcode is being blocked (also implying that the last one has completed,
-	// allowing for synchronisation).
+	// Toggled by on{Opcode,Fault}(), externally signalling that the next opcode
+	// is being blocked (also implying that the last one has completed, allowing
+	// for synchronisation).
 	blockingEVM sync.Toggle
 	// Closed after execution of one of {STOP,RETURN,REVERT}, or upon a fault,
 	// externally signalling completion of the execution.
@@ -212,10 +222,10 @@ type debugger struct {
 	last CapturedState
 }
 
-// NOTE: when directly calling EVMInterpreter.Run(), only Capture{State,Fault}
+// NOTE: when directly calling EVMInterpreter.Run(), only on{OpCode,Fault}
 // will ever be invoked.
 
-func (d *debugger) CaptureState(pc uint64, op vm.OpCode, gasLeft, gasCost uint64, scope *vm.ScopeContext, retData []byte, depth int, err error) {
+func (d *debugger) onOpCode(pc uint64, op byte, gasLeft, gasCost uint64, scope tracing.OpContext, retData []byte, depth int, err error) {
 	d.blockingEVM.Set(true) // unblocks Debugger.Wait()
 
 	// TODO: with the <-d.step at the beginning we can inspect initial state,
@@ -226,18 +236,18 @@ func (d *debugger) CaptureState(pc uint64, op vm.OpCode, gasLeft, gasCost uint64
 	}
 
 	d.last.PC = pc
-	d.last.Op = op
+	d.last.Op = vm.OpCode(op)
 	d.last.GasLeft = gasLeft
 	d.last.GasCost = gasCost
-	d.last.ScopeContext = scope
+	d.last.Context = scope
 	d.last.ReturnData = retData
 	d.last.Err = err
 
 	// In all cases below, closing / sending on d.stepped MUST be the last
 	// action. Debugger.Step() relies on this to perform checks once its receive
 	// on d.stepped is unblocked.
-	switch op {
-	case vm.STOP, vm.RETURN: // REVERT will end up in CaptureFault().
+	switch vm.OpCode(op) {
+	case vm.STOP, vm.RETURN: // REVERT will end up in onFault().
 		close(d.done)
 		close(d.stepped)
 	default:
@@ -246,7 +256,7 @@ func (d *debugger) CaptureState(pc uint64, op vm.OpCode, gasLeft, gasCost uint64
 	}
 }
 
-func (d *debugger) CaptureFault(pc uint64, op vm.OpCode, gasLeft, gasCost uint64, scope *vm.ScopeContext, depth int, err error) {
+func (d *debugger) onFault(pc uint64, op byte, gasLeft, gasCost uint64, scope tracing.OpContext, depth int, err error) {
 	d.blockingEVM.Set(true)
 	defer func() { d.blockingEVM.Set(false) }()
 
@@ -256,10 +266,10 @@ func (d *debugger) CaptureFault(pc uint64, op vm.OpCode, gasLeft, gasCost uint64
 	}
 
 	d.last.PC = pc
-	d.last.Op = op
+	d.last.Op = vm.OpCode(op)
 	d.last.GasLeft = gasLeft
 	d.last.GasCost = gasCost
-	d.last.ScopeContext = scope
+	d.last.Context = scope
 	d.last.ReturnData = nil
 	d.last.Err = err
 

@@ -187,7 +187,7 @@ func (t *termDBG) inputCapture(ev *tcell.EventKey) *tcell.EventKey {
 		}
 	} // switch ev.Rune()
 
-	if t.State().ScopeContext != nil {
+	if t.State().Context != nil {
 		t.populateStack()
 		t.populateMemory()
 	}
@@ -199,17 +199,16 @@ func (t *termDBG) inputCapture(ev *tcell.EventKey) *tcell.EventKey {
 }
 
 func (t *termDBG) populateStack() {
-	stack := t.State().ScopeContext.Stack
-	data := stack.Data()
+	stack := t.State().Context.StackData()
 
 	t.stack.Clear()
-	for i := len(data) - 1; i >= 0; i-- {
-		item := data[i]
+	for i, n := 0, len(stack); i < n; i++ {
+		item := t.State().StackBack(i)
 		buf := item.Bytes()
 		if item.IsZero() {
 			buf = []byte{0}
 		}
-		t.stack.AddItem(fmt.Sprintf("%4d %64x", len(data)-i, buf), "", 0, nil)
+		t.stack.AddItem(fmt.Sprintf("%4d %64x", len(stack)-i, buf), "", 0, nil)
 	}
 
 	// Empty lines so real values are at the bottom
@@ -219,12 +218,11 @@ func (t *termDBG) populateStack() {
 }
 
 func (t *termDBG) populateMemory() {
-	mem := t.State().ScopeContext.Memory
-	heap := mem.Data()
+	mem := t.State().Context.MemoryData()
 
 	t.memory.Clear()
-	for i, n := 0, len(heap); i < n; i += 32 {
-		t.memory.AddItem(fmt.Sprintf("%02x %x", i, heap[i:32]), "", 0, nil)
-		heap = heap[n:]
+	for i, n := 0, len(mem); i < n; i += 32 {
+		t.memory.AddItem(fmt.Sprintf("%02x %x", i, mem[i:32]), "", 0, nil)
+		mem = mem[n:]
 	}
 }
