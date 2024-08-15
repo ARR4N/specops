@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/vm"
 
 	"github.com/solidifylabs/specops/stack"
@@ -70,7 +71,7 @@ func TestDebugger(t *testing.T) {
 			got, err := results()
 			var want [32]byte
 			want[31] = retVal
-			if err != nil || !bytes.Equal(got, want[:]) {
+			if err != nil || !bytes.Equal(got.ReturnData, want[:]) {
 				t.Errorf("%T.StartDebugging() results function returned %#x, err = %v; want %#x; nil error", code, got, err, want[:])
 			}
 		})
@@ -139,10 +140,14 @@ func TestDebuggerErrors(t *testing.T) {
 					err:  dbg.State().Err,
 				},
 				{
-					name: fmt.Sprintf("%T.StartDebugging() results function", dbg),
+					name: fmt.Sprintf("%T.StartDebugging() -> %T.Err", dbg, &core.ExecutionResult{}),
 					err: func() error {
-						_, err := results()
-						return vm.VMErrorFromErr(err)
+						r, err := results()
+						if err != nil {
+							// This would mean that the error occurred outside of the code execution.
+							t.Fatalf("%T.StartDebugging() results function error %v", dbg, err)
+						}
+						return vm.VMErrorFromErr(r.Err)
 					}(),
 				},
 			}

@@ -10,6 +10,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//internal/sync",
+        "@com_github_ethereum_go_ethereum//core",
         "@com_github_ethereum_go_ethereum//core/tracing",
         "@com_github_ethereum_go_ethereum//core/vm",
         "@com_github_gdamore_tcell_v2//:tcell",

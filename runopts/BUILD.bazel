@@ -7,17 +7,32 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//evmdebug",
+        "@com_github_ethereum_go_ethereum//common",
+        "@com_github_ethereum_go_ethereum//core/tracing",
+        "@com_github_ethereum_go_ethereum//core/types",
         "@com_github_ethereum_go_ethereum//core/vm",
+        "@com_github_ethereum_go_ethereum//crypto",
         "@com_github_ethereum_go_ethereum//params",
+        "@com_github_holiman_uint256//:uint256",
     ],
 )
 
 go_test(
     name = "runopts_test",
-    srcs = ["debugger_test.go"],
+    srcs = [
+        "debugger_test.go",
+        "runopts_test.go",
+    ],
     deps = [
+        ":runopts",
         "//:specops",
         "//stack",
+        "@com_github_ethereum_go_ethereum//common",
+        "@com_github_ethereum_go_ethereum//core",
+        "@com_github_ethereum_go_ethereum//core/types",
         "@com_github_ethereum_go_ethereum//core/vm",
+        "@com_github_ethereum_go_ethereum//crypto",
+        "@com_github_google_go_cmp//cmp",
+        "@com_github_holiman_uint256//:uint256",
     ],
 )

@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/holiman/uint256"
 
+	"github.com/solidifylabs/specops/runopts"
 	"github.com/solidifylabs/specops/stack"
 )
 
@@ -673,9 +674,9 @@ func compileAndRun[T interface{ []byte | [32]byte }](code Code, callData T) []by
 		slice = c[:]
 	}
 
-	got, err := code.Run(slice)
+	got, err := code.Run(slice, runopts.ErrorOnRevert())
 	if err != nil {
 		log.Fatal(err)
 	}
-	return got
+	return got.ReturnData
 }
