@@ -15,6 +15,11 @@ import (
 // A Configuration carries all values that can be modified to configure a call
 // to specops.Code.Run(). It is intially set by Run() and then passed to all
 // Options to be modified.
+//
+// The [vm.StateDB] will be initialised to an empty but valid database that MAY
+// be populated by an [Option] or even entirely replaced. The code for
+// [Contract.Address] MUST NOT be prepopulated but storage and balance MAY be
+// altered.
 type Configuration struct {
 	Contract        *Contract
 	From            common.Address
@@ -29,7 +34,8 @@ type Configuration struct {
 }
 
 // Contract defines how the compiled SpecOps bytecode will be "deployed" before
-// being run.
+// being run. [DefaultContractAddress] returns the default address with which
+// Contracts are constructed.
 type Contract struct {
 	Address  common.Address
 	bytecode []byte
