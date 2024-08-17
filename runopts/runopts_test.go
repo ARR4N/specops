@@ -23,7 +23,7 @@ func randomAddresses(n int, seed []byte) []common.Address {
 	addrs := make([]common.Address, n)
 	buf := make([]byte, common.AddressLength)
 	for i := range addrs {
-		keccak.Read(buf)
+		keccak.Read(buf) //nolint:errcheck // never returns an error
 		copy(addrs[i][:], buf)
 	}
 	return addrs
@@ -81,7 +81,7 @@ func TestValue(t *testing.T) {
 	buf := make([]byte, 16)
 	vals := make([]uint256.Int, 20)
 	for i := range vals {
-		keccak.Read(buf)
+		keccak.Read(buf) //nolint:errcheck // never returns an error
 		vals[i].SetBytes(buf)
 	}
 
