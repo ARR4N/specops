@@ -29,6 +29,7 @@ go_test(
     deps = [
         ":runopts",
         "//:specops",
+        "//revert",
         "//stack",
         "@com_github_ethereum_go_ethereum//common",
         "@com_github_ethereum_go_ethereum//core",

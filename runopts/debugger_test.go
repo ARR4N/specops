@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/vm"
 
+	"github.com/solidifylabs/specops/runopts"
 	"github.com/solidifylabs/specops/stack"
 
 	. "github.com/solidifylabs/specops"
@@ -125,7 +126,7 @@ func TestDebuggerErrors(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dbg, results, err := tt.code.StartDebugging(nil)
+			dbg, results, err := tt.code.StartDebugging(nil, runopts.NoErrorOnRevert())
 			if err != nil {
 				t.Fatalf("%T.StartDebugging(nil) error %v", tt.code, err)
 			}

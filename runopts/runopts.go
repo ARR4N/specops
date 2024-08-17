@@ -16,10 +16,10 @@ import (
 // to specops.Code.Run(). It is intially set by Run() and then passed to all
 // Options to be modified.
 type Configuration struct {
-	Contract      *Contract
-	From          common.Address
-	Value         *uint256.Int
-	ErrorOnRevert bool // see Run() re errors
+	Contract        *Contract
+	From            common.Address
+	Value           *uint256.Int
+	NoErrorOnRevert bool // see Run() re errors
 	// vm.NewEVM()
 	BlockCtx    vm.BlockContext
 	TxCtx       vm.TxContext
@@ -93,9 +93,12 @@ func WithNewDebugger() (*evmdebug.Debugger, Option) {
 	return d, WithDebugger(d)
 }
 
-func ErrorOnRevert() Option {
+// NoErrorOnRevert signals to Run() that it must return a nil error if the
+// Code compiled and was successfully executed but the execution itself
+// reverted. The error will still be available in the [vm.ExecutionResult].
+func NoErrorOnRevert() Option {
 	return Func(func(c *Configuration) error {
-		c.ErrorOnRevert = true
+		c.NoErrorOnRevert = true
 		return nil
 	})
 }

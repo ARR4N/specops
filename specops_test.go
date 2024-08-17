@@ -12,7 +12,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/holiman/uint256"
 
-	"github.com/solidifylabs/specops/runopts"
 	"github.com/solidifylabs/specops/stack"
 	"github.com/solidifylabs/specops/types"
 )
@@ -21,7 +20,7 @@ import (
 // error, otherwise returning the result. It's useful for testable examples that
 // don't have access to t.Fatal().
 func mustRunByteCode(compiled, callData []byte) []byte {
-	out, err := runBytecode(compiled, callData, runopts.ErrorOnRevert())
+	out, err := runBytecode(compiled, callData)
 	if err != nil {
 		log.Fatal(err)
 	}

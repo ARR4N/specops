@@ -18,9 +18,13 @@ import (
 )
 
 // Run calls c.Compile() and runs the compiled bytecode on a freshly
-// instantiated vm.EVMInterpreter. The default EVM parameters MUST NOT be
-// considered stable: they are currently such that code runs on the Cancun fork
-// with no state DB.
+// instantiated [vm.EVM]. See [runopts] for configuring the EVM and call
+// parameters, and for intercepting bytecode.
+//
+// Run returns an error if the code reverts. The error will be a [revert.Error]
+// carrying the same revert error and data as the [core.ExecutionResult]
+// returned by Run. To only return errors in the [core.ExecutionResult], use
+// [runopts.NoErrorOnRevert].
 func (c Code) Run(callData []byte, opts ...runopts.Option) (*core.ExecutionResult, error) {
 	compiled, err := c.Compile()
 	if err != nil {
@@ -31,7 +35,7 @@ func (c Code) Run(callData []byte, opts ...runopts.Option) (*core.ExecutionResul
 
 // StartDebugging appends a runopts.Debugger (`dbg`) to the Options, calls
 // c.Run() in a new goroutine, and returns `dbg` along with a function to
-// retrieve ther esults of Run(). The function will block until Run() returns,
+// retrieve the results of Run(). The function will block until Run() returns,
 // i.e. when dbg.Done() returns true. There is no need to call dbg.Wait().
 //
 // If execution never completes, such that dbg.Done() always returns false, then
@@ -118,10 +122,10 @@ func runBytecode(compiled, callData []byte, opts ...runopts.Option) (*core.Execu
 	if err != nil {
 		return nil, err
 	}
-	if cfg.ErrorOnRevert {
-		return res, revert.ErrFrom(res)
+	if cfg.NoErrorOnRevert {
+		return res, nil
 	}
-	return res, nil
+	return res, revert.ErrFrom(res) /* may be nil */
 }
 
 func newRunConfig(compiled []byte, opts ...runopts.Option) (*runopts.Configuration, error) {

@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/google/go-cmp/cmp"
 	"github.com/holiman/uint256"
+	"github.com/solidifylabs/specops/revert"
 	"github.com/solidifylabs/specops/runopts"
 
 	. "github.com/solidifylabs/specops"
@@ -37,7 +38,7 @@ func TestContractAddress(t *testing.T) {
 	addrs := randomAddresses(20, nil)
 
 	for _, addr := range addrs {
-		gotRes, err := code.Run(nil, runopts.ContractAddress(addr), runopts.ErrorOnRevert())
+		gotRes, err := code.Run(nil, runopts.ContractAddress(addr))
 		if err != nil {
 			t.Fatalf("%T.Run() error %v", code, err)
 		}
@@ -58,7 +59,7 @@ func TestFromAddress(t *testing.T) {
 	addrs := randomAddresses(20, nil)
 
 	for _, addr := range addrs {
-		gotRes, err := code.Run(nil, runopts.From(addr), runopts.ErrorOnRevert())
+		gotRes, err := code.Run(nil, runopts.From(addr))
 		if err != nil {
 			t.Fatalf("%T.Run() error %v", code, err)
 		}
@@ -85,7 +86,7 @@ func TestValue(t *testing.T) {
 	}
 
 	for _, val := range vals {
-		gotRes, err := code.Run(nil, runopts.Value(val), runopts.ErrorOnRevert())
+		gotRes, err := code.Run(nil, runopts.Value(val))
 		if err != nil {
 			t.Fatalf("%T.Run() error %v", code, err)
 		}
@@ -106,12 +107,13 @@ func TestErrorOnRevert(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "without Options",
+			name:    "without Options",
+			wantErr: true,
 		},
 		{
-			name:    "with ErrorOnRevert Option",
-			opts:    []runopts.Option{runopts.ErrorOnRevert()},
-			wantErr: true,
+			name:    "with NoErrorOnRevert Option",
+			opts:    []runopts.Option{runopts.NoErrorOnRevert()},
+			wantErr: false,
 		},
 	}
 
@@ -120,6 +122,9 @@ func TestErrorOnRevert(t *testing.T) {
 			res, err := code.Run(nil, tt.opts...)
 			if gotErr := err != nil; gotErr != tt.wantErr {
 				t.Errorf("%T.Run() got err %v; want err = %t", code, err, tt.wantErr)
+			}
+			if _, gotData := revert.Data(err); gotData != tt.wantErr {
+				t.Errorf("revert.Data(error from %T.Run()) got %t; want %t", code, gotData, tt.wantErr)
 			}
 
 			// The ExecutionResult MUST always have the error.
