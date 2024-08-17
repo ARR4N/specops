@@ -2,7 +2,7 @@
 
 module(
     name = "solidifylabs_specops",
-    version = "0.0.0",
+    version = "1.0.0-alpha",
 )
 
 bazel_dep(name = "aspect_bazel_lib", version = "2.5.1")
