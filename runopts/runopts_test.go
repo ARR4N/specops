@@ -1,6 +1,8 @@
 package runopts_test
 
 import (
+	"fmt"
+	"log"
 	"math/big"
 	"testing"
 
@@ -218,4 +220,30 @@ func TestGenesisAlloc(t *testing.T) {
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("Stack diff (-want +got):\n%s", diff)
 	}
+}
+
+func ExampleCaptured() {
+	const (
+		slot  = 42
+		value = 314159
+	)
+
+	code := Code{
+		Fn(SSTORE, PUSH(slot), PUSH(value)),
+	}
+
+	// All runopts.Captured[T] values are passed to Run() to be populated, after
+	// which, their Val fields can be used.
+	db := runopts.CaptureStateDB()
+	if _, err := code.Run(nil, db); err != nil {
+		log.Fatal(err)
+	}
+
+	got := db.Val.GetState(
+		runopts.DefaultContractAddress(),
+		common.BigToHash(big.NewInt(slot)),
+	)
+	fmt.Println(new(uint256.Int).SetBytes(got[:]))
+
+	// Output: 314159
 }
