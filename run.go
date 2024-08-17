@@ -172,6 +172,7 @@ func newRunConfig(compiled []byte, opts ...runopts.Option) (*runopts.Configurati
 		return nil, fmt.Errorf("runopts.Options MUST NOT set the code of the contract")
 	}
 	sdb.SetCode(a, compiled)
+	sdb.AddAddressToAccessList(a)
 
 	sdb.AddBalance(cfg.From, cfg.Value, tracing.BalanceChangeUnspecified)
 
