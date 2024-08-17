@@ -24,7 +24,7 @@ func mustRunByteCode(compiled, callData []byte) []byte {
 	if err != nil {
 		log.Fatal(err)
 	}
-	return out
+	return out.ReturnData
 }
 
 func TestRunCompiled(t *testing.T) {
@@ -194,11 +194,11 @@ func TestRunCompiled(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%T.Run(%#x) error %v", tt.code, tt.callData, err)
 			}
-			if !bytes.Equal(got, tt.want) {
+			if !bytes.Equal(got.Return(), tt.want) {
 				t.Errorf(
 					"%T.Run(%#x) got:\n%#x\n%v\n\nwant:\n%#x\n%v",
 					tt.code, tt.callData,
-					got, new(uint256.Int).SetBytes(got),
+					got, new(uint256.Int).SetBytes(got.Return()),
 					tt.want, new(uint256.Int).SetBytes(tt.want),
 				)
 			}

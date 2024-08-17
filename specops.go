@@ -83,7 +83,7 @@ func (p bytesPusher) ToPush() []byte { return []byte(p) }
 // negative. A string refers to the respective JUMPDEST or Label while a
 // []string refers to a concatenation of the same (e.g. a JUMP table).
 func PUSH[P interface {
-	int | uint64 | common.Address | uint256.Int | byte | []byte | JUMPDEST | []JUMPDEST | Label | []Label | string | []string
+	int | uint64 | common.Address | common.Hash | uint256.Int | byte | []byte | JUMPDEST | []JUMPDEST | Label | []Label | string | []string
 }](v P,
 ) types.Bytecoder {
 	pToB := types.BytecoderFromStackPusher
@@ -110,6 +110,9 @@ func PUSH[P interface {
 
 	case common.Address:
 		return pToB(addressPusher(v))
+
+	case common.Hash:
+		return pToB(hashPusher(v))
 
 	case uint256.Int:
 		return pToB(wordPusher(v))
@@ -163,3 +166,7 @@ func (p wordPusher) ToPush() []byte {
 type addressPusher common.Address
 
 func (p addressPusher) ToPush() []byte { return p[:] }
+
+type hashPusher common.Hash
+
+func (p hashPusher) ToPush() []byte { return p[:] }

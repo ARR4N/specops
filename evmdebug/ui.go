@@ -3,10 +3,17 @@ package evmdebug
 import (
 	"fmt"
 
+	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
+
+// Context describes the debugging context.
+type Context struct {
+	Bytecode, CallData []byte
+	Results            func() (*core.ExecutionResult, error)
+}
 
 // RunTerminalUI starts a UI that controls the Debugger and displays opcodes,
 // memory, stack etc. Because of the current Debugger limitation of a single
@@ -16,15 +23,15 @@ import (
 // As the Debugger only has access via a vm.EVMLogger, it can't retrieve the
 // final result. The `results` argument MUST return the returned buffer / error
 // after d.Done() returns true.
-func (d *Debugger) RunTerminalUI(callData []byte, results func() ([]byte, error), contract *vm.Contract) error {
+func (d *Debugger) RunTerminalUI(dbgCtx *Context) error {
 	t := &termDBG{
 		Debugger: d,
-		results:  results,
+		dbgCtx:   dbgCtx,
 	}
 	t.initComponents()
 	t.initApp()
-	t.populateCallData(callData)
-	t.populateCode(contract)
+	t.populateCallData()
+	t.populateCode()
 	return t.app.Run()
 }
 
@@ -38,7 +45,7 @@ type termDBG struct {
 	code         *tview.List
 	pcToCodeItem map[uint64]int
 
-	results func() ([]byte, error)
+	dbgCtx *Context
 }
 
 func (*termDBG) styleBox(b *tview.Box, title string) *tview.Box {
@@ -102,15 +109,15 @@ func (t *termDBG) createLayout() tview.Primitive {
 	return root
 }
 
-func (t *termDBG) populateCallData(cd []byte) {
-	t.callData.SetText(fmt.Sprintf("%x", cd))
+func (t *termDBG) populateCallData() {
+	t.callData.SetText(fmt.Sprintf("%x", t.dbgCtx.CallData))
 }
 
-func (t *termDBG) populateCode(c *vm.Contract) {
+func (t *termDBG) populateCode() {
 	t.pcToCodeItem = make(map[uint64]int)
 
 	var skip int
-	for i, o := range c.Code {
+	for i, o := range t.dbgCtx.Bytecode {
 		if skip > 0 {
 			skip--
 			continue
@@ -123,7 +130,7 @@ func (t *termDBG) populateCode(c *vm.Contract) {
 
 		case op.IsPush():
 			skip += int(op - vm.PUSH0)
-			text = fmt.Sprintf("%s %#x", op.String(), c.Code[i+1:i+1+skip])
+			text = fmt.Sprintf("%s %#x", op.String(), t.dbgCtx.Bytecode[i+1:i+1+skip])
 
 		default:
 			text = op.String()
@@ -149,7 +156,7 @@ func (t *termDBG) onStep() {
 }
 
 func (t *termDBG) resultToDisplay() string {
-	out, err := t.results()
+	out, err := t.dbgCtx.Results()
 	if err != nil {
 		return fmt.Sprintf("ERROR: %v", err)
 	}

@@ -1778,9 +1778,9 @@
       "general": {
         "bzlTransitiveDigest": "A0gH5MSE6WBK+QRqp+nPrRZg9xNadGiczXum6UhsKPQ=",
         "accumulatedFileDigests": {
-          "@@//:go.mod": "6ad4ae4d01f71ea0c56029f88f73fb0001309cf6d0b53ff59dabe092d68b4ea8",
+          "@@//:go.mod": "bd2aa54042ab19c523212283b1986e7079f056febd497aa841167706807f0ae8",
           "@@rules_go~0.48.0//:go.sum": "d56fdb19b21a5f12bcf625c49432371ac39c2def0f564098fbda107f7c080f40",
-          "@@//:go.sum": "353f3153b183f7995301b3c96c9f384fef436a046a921aa42682364970d3cdd6",
+          "@@//:go.sum": "322ce14ab99311a005511973d50a1e91cf0d17a5bae26c26bf784ef659ab0b4b",
           "@@gazelle~0.37.0//:go.mod": "3bdf577b31bd67ce2b7bc1c438077c421395278e79b2e95e8de7d7942d0297d7",
           "@@gazelle~0.37.0//:go.sum": "14df932fff1ea6aa2b9ac6ad53b8acf3d1cffe44e3375e75d1c4c9d2a86d3473",
           "@@rules_go~0.48.0//:go.mod": "de22304b720f7f61350ec1c9739de6c0a1b1103fd22bfeb6e92c6c843ddc6d6e"
@@ -1925,6 +1925,23 @@
               "version": "v1.0.2-0.20181231171920-c182affec369"
             }
           },
+          "com_github_deckarep_golang_set_v2": {
+            "bzlFile": "@@gazelle~0.37.0//internal:go_repository.bzl",
+            "ruleClassName": "go_repository",
+            "attributes": {
+              "name": "gazelle~0.37.0~go_deps~com_github_deckarep_golang_set_v2",
+              "importpath": "github.com/deckarep/golang-set/v2",
+              "build_directives": [],
+              "build_file_generation": "auto",
+              "build_extra_args": [],
+              "patches": [],
+              "patch_args": [],
+              "debug_mode": false,
+              "sum": "h1:XfcQbWM1LlMB8BsJ8N9vW5ehnnPVIw0je80NsVHagjM=",
+              "replace": "",
+              "version": "v2.6.0"
+            }
+          },
           "com_github_cockroachdb_redact": {
             "bzlFile": "@@gazelle~0.37.0//internal:go_repository.bzl",
             "ruleClassName": "go_repository",
@@ -2025,6 +2042,23 @@
               "sum": "h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=",
               "replace": "",
               "version": "v1.0.1"
+            }
+          },
+          "com_github_microsoft_go_winio": {
+            "bzlFile": "@@gazelle~0.37.0//internal:go_repository.bzl",
+            "ruleClassName": "go_repository",
+            "attributes": {
+              "name": "gazelle~0.37.0~go_deps~com_github_microsoft_go_winio",
+              "importpath": "github.com/Microsoft/go-winio",
+              "build_directives": [],
+              "build_file_generation": "auto",
+              "build_extra_args": [],
+              "patches": [],
+              "patch_args": [],
+              "debug_mode": false,
+              "sum": "h1:F2VQgta7ecxGYO8k3ZZz3RS8fVIXVxONVUPlNERoyfY=",
+              "replace": "",
+              "version": "v0.6.2"
             }
           },
           "org_golang_x_sync": {
@@ -2834,6 +2868,23 @@
               "version": "v0.7.3"
             }
           },
+          "com_github_gorilla_websocket": {
+            "bzlFile": "@@gazelle~0.37.0//internal:go_repository.bzl",
+            "ruleClassName": "go_repository",
+            "attributes": {
+              "name": "gazelle~0.37.0~go_deps~com_github_gorilla_websocket",
+              "importpath": "github.com/gorilla/websocket",
+              "build_directives": [],
+              "build_file_generation": "auto",
+              "build_extra_args": [],
+              "patches": [],
+              "patch_args": [],
+              "debug_mode": false,
+              "sum": "h1:+/TMaTYc4QFitKJxsQ7Yye35DkWvkdLcvGKqM+x0Ufc=",
+              "replace": "",
+              "version": "v1.4.2"
+            }
+          },
           "org_golang_x_text": {
             "bzlFile": "@@gazelle~0.37.0//internal:go_repository.bzl",
             "ruleClassName": "go_repository",
@@ -3069,6 +3120,7 @@
                 "com_github_spf13_cobra": "github.com/spf13/cobra",
                 "org_golang_x_sync": "golang.org/x/sync",
                 "com_github_datadog_zstd": "github.com/DataDog/zstd",
+                "com_github_microsoft_go_winio": "github.com/Microsoft/go-winio",
                 "com_github_stackexchange_wmi": "github.com/StackExchange/wmi",
                 "com_github_victoriametrics_fastcache": "github.com/VictoriaMetrics/fastcache",
                 "com_github_beorn7_perks": "github.com/beorn7/perks",
@@ -3085,6 +3137,7 @@
                 "com_github_consensys_gnark_crypto": "github.com/consensys/gnark-crypto",
                 "com_github_crate_crypto_go_ipa": "github.com/crate-crypto/go-ipa",
                 "com_github_crate_crypto_go_kzg_4844": "github.com/crate-crypto/go-kzg-4844",
+                "com_github_deckarep_golang_set_v2": "github.com/deckarep/golang-set/v2",
                 "com_github_decred_dcrd_dcrec_secp256k1_v4": "github.com/decred/dcrd/dcrec/secp256k1/v4",
                 "com_github_ethereum_c_kzg_4844": "github.com/ethereum/c-kzg-4844",
                 "com_github_ethereum_go_verkle": "github.com/ethereum/go-verkle",
@@ -3095,6 +3148,7 @@
                 "com_github_gogo_protobuf": "github.com/gogo/protobuf",
                 "com_github_golang_protobuf": "github.com/golang/protobuf",
                 "com_github_golang_snappy": "github.com/golang/snappy",
+                "com_github_gorilla_websocket": "github.com/gorilla/websocket",
                 "com_github_holiman_bloomfilter_v2": "github.com/holiman/bloomfilter/v2",
                 "com_github_inconshreveable_mousetrap": "github.com/inconshreveable/mousetrap",
                 "com_github_klauspost_compress": "github.com/klauspost/compress",

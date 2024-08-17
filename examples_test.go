@@ -677,5 +677,5 @@ func compileAndRun[T interface{ []byte | [32]byte }](code Code, callData T) []by
 	if err != nil {
 		log.Fatal(err)
 	}
-	return got
+	return got.ReturnData
 }

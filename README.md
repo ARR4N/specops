@@ -2,8 +2,6 @@
 
 **`specops` is a low-level, domain-specific language and compiler for crafting [Ethereum VM](https://ethereum.org/en/developers/docs/evm) bytecode. The project also includes a CLI with code execution and terminal-based debugger.**
 
-This is a _very_ early release, a weekend project gone rogue. Feedback and contributions appreciated.
-
 ## _special_ opcodes
 
 Writing bytecode is hard. Tracking stack items is difficult enough, made worse by refactoring that renders every `DUP` and `SWAP` off-by-X.
@@ -47,9 +45,10 @@ New features will be prioritised based on demand. If there's something you'd lik
   - [x] Caching of search for optimal route
 - [ ] Standalone compiler
 - [x] In-process EVM execution (geth)
+  - [x] Full control of configuration (e.g. `params.ChainConfig` and `vm.Config`)
+  - [x] State preloading (e.g. other contracts to call) and inspection (e.g. `SSTORE` testing)
+  - [x] Message overrides (caller and value)
 - [x] Debugger
-  - [x] Single call frame (via `vm.EVMInterpreter`)
-  - [ ] Multiple call frames; i.e. support `*CALL` methods
   * [x] Stepping
   * [ ] Breakpoints
   * [x] Programmatic inspection (e.g. native Go tests at opcode resolution)

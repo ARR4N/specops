@@ -1,0 +1,9 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "revert",
+    srcs = ["revert.go"],
+    importpath = "github.com/solidifylabs/specops/revert",
+    visibility = ["//visibility:public"],
+    deps = ["@com_github_ethereum_go_ethereum//core"],
+)
