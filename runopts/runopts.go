@@ -103,6 +103,8 @@ func NoErrorOnRevert() Option {
 	})
 }
 
+// ContractAddress sets the address to which the compiled bytecode will be
+// "deployed" before being run.
 func ContractAddress(a common.Address) Option {
 	return Func(func(c *Configuration) error {
 		c.Contract.Address = a
@@ -110,6 +112,8 @@ func ContractAddress(a common.Address) Option {
 	})
 }
 
+// From sets the address calling the contract; i.e. the value pushed to the
+// stack by the CALLER opcode.
 func From(a common.Address) Option {
 	return Func(func(c *Configuration) error {
 		c.From = a
@@ -117,11 +121,14 @@ func From(a common.Address) Option {
 	})
 }
 
-type Number interface {
+// An Unsigned type is an unsigned integer.
+type Unsigned interface {
 	uint256.Int | *uint256.Int | uint | uint64
 }
 
-func Value[N Number](v N) Option {
+// Value sets the value sent when calling the contract; i.e. the value pushed to
+// the stack by the CALLVALUE opcode.
+func Value[U Unsigned](v U) Option {
 	var u *uint256.Int
 	switch v := any(v).(type) {
 	case uint256.Int:
@@ -140,6 +147,9 @@ func Value[N Number](v N) Option {
 	})
 }
 
+// GenesisAlloc preloads the state with code, storage values, and balances
+// described in the alloc. This can be used for testing interaction with other
+// contracts.
 func GenesisAlloc(alloc types.GenesisAlloc) Option {
 	return Func(func(c *Configuration) error {
 		s := c.StateDB
