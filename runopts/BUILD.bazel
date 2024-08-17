@@ -2,7 +2,10 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "runopts",
-    srcs = ["runopts.go"],
+    srcs = [
+        "capture.go",
+        "runopts.go",
+    ],
     importpath = "github.com/solidifylabs/specops/runopts",
     visibility = ["//visibility:public"],
     deps = [
