@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/core/vm"
-	"github.com/solidifylabs/specops/types"
+	"github.com/arr4n/specops/types"
 )
 
 type xFormType int

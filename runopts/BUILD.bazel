@@ -6,7 +6,7 @@ go_library(
         "capture.go",
         "runopts.go",
     ],
-    importpath = "github.com/solidifylabs/specops/runopts",
+    importpath = "github.com/arr4n/specops/runopts",
     visibility = ["//visibility:public"],
     deps = [
         "//evmdebug",

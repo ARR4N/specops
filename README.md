@@ -1,4 +1,4 @@
-# SpecOps [![Go](https://github.com/solidifylabs/specops/actions/workflows/go.yml/badge.svg)](https://github.com/solidifylabs/specops/actions/workflows/go.yml) [![Go Reference](https://pkg.go.dev/badge/github.com/solidifylabs/specops.svg)](https://pkg.go.dev/github.com/solidifylabs/specops)
+# SpecOps [![Go](https://github.com/arr4n/specops/actions/workflows/go.yml/badge.svg)](https://github.com/arr4n/specops/actions/workflows/go.yml) [![Go Reference](https://pkg.go.dev/badge/github.com/arr4n/specops.svg)](https://pkg.go.dev/github.com/arr4n/specops)
 
 **`specops` is a low-level, domain-specific language and compiler for crafting [Ethereum VM](https://ethereum.org/en/developers/docs/evm) bytecode. The project also includes a CLI with code execution and terminal-based debugger.**
 
@@ -15,7 +15,7 @@ Some of them are interpreted by the compiler, converting them into [regular](htt
 
 ## Getting started
 
-See the [`getting-started/`](https://github.com/solidifylabs/specops/tree/main/getting-started) directory for creating your first SpecOps code. Also check out the [examples](#other-examples) and the [documentation](#documentation).
+See the [`getting-started/`](https://github.com/arr4n/specops/tree/main/getting-started) directory for creating your first SpecOps code. Also check out the [examples](#other-examples) and the [documentation](#documentation).
 
 ### Do I have to learn Go?
 
@@ -62,7 +62,7 @@ New features will be prioritised based on demand. If there's something you'd lik
 ### Documentation
 
 The [`specops` Go
-documentation](https://pkg.go.dev/github.com/solidifylabs/specops) covers all
+documentation](https://pkg.go.dev/github.com/arr4n/specops) covers all
 functionality.
 
 ## Examples
@@ -72,7 +72,7 @@ functionality.
 To run this example `Code` block with the SpecOps CLI, see the `getting-started/` directory.
 
 ```go
-import . github.com/solidifylabs/specops
+import . github.com/arr4n/specops
 
 …
 
@@ -115,18 +115,18 @@ result, err := results()
 ### Other examples
 
 - Verbatim reimplementation of well-known contracts
-  * [EIP-1167 Minimal Proxy](https://github.com/solidifylabs/specops/blob/b03a75d713bffaec8cbf4b60f235f783e11bbc82/examples_test.go#L36) ([original](https://eips.ethereum.org/EIPS/eip-1167#specification))
+  * [EIP-1167 Minimal Proxy](https://github.com/arr4n/specops/blob/b03a75d713bffaec8cbf4b60f235f783e11bbc82/examples_test.go#L36) ([original](https://eips.ethereum.org/EIPS/eip-1167#specification))
   * 0age/metamorphic ([original](https://github.com/0age/metamorphic/blob/55adac1d2487046002fc33a5dff7d669b5419a3a/contracts/MetamorphicContractFactory.sol#L55))
-    - [Verbose version](https://github.com/solidifylabs/specops/blob/b03a75d713bffaec8cbf4b60f235f783e11bbc82/examples_test.go#L108) with explanation of SpecOps functionality + an alternative with automated stack transformation (saves a whole 3 gas!)
-    - [Succinct version](https://github.com/solidifylabs/specops/blob/b03a75d713bffaec8cbf4b60f235f783e11bbc82/examples_test.go#L217) as if writing production code
-- [Monte Carlo approximation of pi](https://github.com/solidifylabs/specops/blob/41efe932c9a85e45ce705b231577447e6c944487/examples_test.go#L158)
-- [`sqrt()`](https://github.com/solidifylabs/specops/blob/41efe932c9a85e45ce705b231577447e6c944487/examples_test.go#L246) as seen ~~on TV~~ in `prb-math` ([original](https://github.com/PaulRBerg/prb-math/blob/5b6279a0cf7c1b1b6a5cc96082811f7ef620cf60/src/Common.sol#L595))
+    - [Verbose version](https://github.com/arr4n/specops/blob/b03a75d713bffaec8cbf4b60f235f783e11bbc82/examples_test.go#L108) with explanation of SpecOps functionality + an alternative with automated stack transformation (saves a whole 3 gas!)
+    - [Succinct version](https://github.com/arr4n/specops/blob/b03a75d713bffaec8cbf4b60f235f783e11bbc82/examples_test.go#L217) as if writing production code
+- [Monte Carlo approximation of pi](https://github.com/arr4n/specops/blob/41efe932c9a85e45ce705b231577447e6c944487/examples_test.go#L158)
+- [`sqrt()`](https://github.com/arr4n/specops/blob/41efe932c9a85e45ce705b231577447e6c944487/examples_test.go#L246) as seen ~~on TV~~ in `prb-math` ([original](https://github.com/PaulRBerg/prb-math/blob/5b6279a0cf7c1b1b6a5cc96082811f7ef620cf60/src/Common.sol#L595))
 
 ### Debugger
 
 Key bindings are described in the `getting-started/` README.
 
-![image](https://github.com/solidifylabs/specops/assets/519948/5057ad0f-bb6f-438b-a295-8b1f410d2330)
+![image](https://github.com/arr4n/specops/assets/519948/5057ad0f-bb6f-438b-a295-8b1f410d2330)
 
 ## Acknowledgements
 

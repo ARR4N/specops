@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/solidifylabs/specops"
+	"github.com/arr4n/specops"
 	"github.com/spf13/cobra"
 )
 

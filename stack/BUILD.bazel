@@ -6,7 +6,7 @@ go_library(
         "stack.go",
         "transform.go",
     ],
-    importpath = "github.com/solidifylabs/specops/stack",
+    importpath = "github.com/arr4n/specops/stack",
     visibility = ["//visibility:public"],
     deps = [
         "//types",

@@ -11,10 +11,10 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/solidifylabs/specops/evmdebug"
-	"github.com/solidifylabs/specops/stack"
+	"github.com/arr4n/specops/evmdebug"
+	"github.com/arr4n/specops/stack"
 
-	. "github.com/solidifylabs/specops"
+	. "github.com/arr4n/specops"
 )
 
 func ExampleTransformation() {

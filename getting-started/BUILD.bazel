@@ -10,7 +10,7 @@ load("@rules_go//go:def.bzl", "go_binary", "go_library")
 go_library(
     name = "getting-started_lib",
     srcs = ["getting-started.spec.go"],
-    importpath = "github.com/solidifylabs/specops/getting-started",
+    importpath = "github.com/arr4n/specops/getting-started",
     visibility = ["//visibility:private"],
     deps = [
         "//:specops",

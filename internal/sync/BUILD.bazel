@@ -6,7 +6,7 @@ go_library(
         "doc.go",
         "toggle.go",
     ],
-    importpath = "github.com/solidifylabs/specops/internal/sync",
+    importpath = "github.com/arr4n/specops/internal/sync",
     visibility = ["//:__subpackages__"],
 )
 

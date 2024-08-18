@@ -9,7 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/holiman/uint256"
-	"github.com/solidifylabs/specops/evmdebug"
+	"github.com/arr4n/specops/evmdebug"
 )
 
 // A Configuration carries all values that can be modified to configure a call

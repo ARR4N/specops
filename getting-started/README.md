@@ -4,7 +4,7 @@
 2. Clone the SpecOps repo:
 
 ```shell
-git clone https://github.com/solidifylabs/specops.git
+git clone https://github.com/arr4n/specops.git
 ```
 
 3. From the `getting-started` directory:
@@ -55,4 +55,4 @@ go run . debug --calldata decafc0ffeebad
 * `<Esc>` or `q` Once execution has ended, quit
 * `Ctrl+C` At any time, quit
 
-![image](https://github.com/solidifylabs/specops/assets/519948/5057ad0f-bb6f-438b-a295-8b1f410d2330)
+![image](https://github.com/arr4n/specops/assets/519948/5057ad0f-bb6f-438b-a295-8b1f410d2330)

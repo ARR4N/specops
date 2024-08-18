@@ -3,7 +3,7 @@ load("@rules_go//go:def.bzl", "go_library")
 go_library(
     name = "types",
     srcs = ["types.go"],
-    importpath = "github.com/solidifylabs/specops/types",
+    importpath = "github.com/arr4n/specops/types",
     visibility = ["//visibility:public"],
     deps = ["@com_github_ethereum_go_ethereum//core/vm"],
 )

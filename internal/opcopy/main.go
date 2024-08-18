@@ -72,7 +72,7 @@ func run() error {
 import (
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	"github.com/solidifylabs/specops/types"
+	"github.com/arr4n/specops/types"
 )
 
 // Aliases of all regular vm.OpCode constants that don't have "special" replacements.

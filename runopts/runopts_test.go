@@ -12,10 +12,10 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/google/go-cmp/cmp"
 	"github.com/holiman/uint256"
-	"github.com/solidifylabs/specops/revert"
-	"github.com/solidifylabs/specops/runopts"
+	"github.com/arr4n/specops/revert"
+	"github.com/arr4n/specops/runopts"
 
-	. "github.com/solidifylabs/specops"
+	. "github.com/arr4n/specops"
 )
 
 func randomAddresses(n int, seed []byte) []common.Address {

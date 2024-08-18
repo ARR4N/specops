@@ -8,7 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/holiman/uint256"
 
-	"github.com/solidifylabs/specops/stack"
+	"github.com/arr4n/specops/stack"
 )
 
 func Example_helloWorld() {

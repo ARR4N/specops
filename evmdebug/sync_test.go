@@ -4,7 +4,7 @@ import (
 	"runtime"
 	"testing"
 
-	. "github.com/solidifylabs/specops"
+	. "github.com/arr4n/specops"
 )
 
 func TestStepSynchronisation(t *testing.T) {
