@@ -12,9 +12,9 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/holiman/uint256"
-	"github.com/solidifylabs/specops/evmdebug"
-	"github.com/solidifylabs/specops/revert"
-	"github.com/solidifylabs/specops/runopts"
+	"github.com/arr4n/specops/evmdebug"
+	"github.com/arr4n/specops/revert"
+	"github.com/arr4n/specops/runopts"
 )
 
 // Run calls c.Compile() and runs the compiled bytecode on a freshly

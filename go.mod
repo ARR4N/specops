@@ -1,4 +1,4 @@
-module github.com/solidifylabs/specops
+module github.com/arr4n/specops
 
 go 1.21
 

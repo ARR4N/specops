@@ -9,7 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/holiman/uint256"
-	"github.com/solidifylabs/specops/internal/sync"
+	"github.com/arr4n/specops/internal/sync"
 )
 
 // NewDebugger constructs a new Debugger.
@@ -128,7 +128,7 @@ func (d *Debugger) Step() {
 	case <-d.done:
 		d.close(true)
 	default:
-		// Fix for https://github.com/solidifylabs/specops/issues/25
+		// Fix for https://github.com/arr4n/specops/issues/25
 		// When this unblocks we are guaranteed that the *next* opcode is being
 		// blocked, which implies that the *current* one is finished, so we have
 		// synchronised and can return.

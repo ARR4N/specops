@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"unsafe"
 
-	"github.com/solidifylabs/specops/types"
+	"github.com/arr4n/specops/types"
 )
 
 // A tag is a labelled location (byte index) in compiled code that can be

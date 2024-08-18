@@ -12,8 +12,8 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/holiman/uint256"
 
-	"github.com/solidifylabs/specops/stack"
-	"github.com/solidifylabs/specops/types"
+	"github.com/arr4n/specops/stack"
+	"github.com/arr4n/specops/types"
 )
 
 // mustRunByteCode propagates arguments to runBytecode, calling log.Fatal() on

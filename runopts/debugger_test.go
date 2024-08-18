@@ -10,10 +10,10 @@ import (
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	"github.com/solidifylabs/specops/runopts"
-	"github.com/solidifylabs/specops/stack"
+	"github.com/arr4n/specops/runopts"
+	"github.com/arr4n/specops/stack"
 
-	. "github.com/solidifylabs/specops"
+	. "github.com/arr4n/specops"
 )
 
 func TestDebugger(t *testing.T) {

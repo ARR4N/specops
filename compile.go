@@ -8,8 +8,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	"github.com/solidifylabs/specops/stack"
-	"github.com/solidifylabs/specops/types"
+	"github.com/arr4n/specops/stack"
+	"github.com/arr4n/specops/types"
 )
 
 type lazyLocator interface {

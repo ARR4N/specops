@@ -6,7 +6,7 @@ go_library(
         "evmdebug.go",
         "ui.go",
     ],
-    importpath = "github.com/solidifylabs/specops/evmdebug",
+    importpath = "github.com/arr4n/specops/evmdebug",
     visibility = ["//visibility:public"],
     deps = [
         "//internal/sync",

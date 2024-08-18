@@ -1,7 +1,7 @@
-"solidifylabs/specops"
+"arr4n/specops"
 
 module(
-    name = "solidifylabs_specops",
+    name = "arr4n_specops",
     version = "1.0.0-alpha",
 )
 

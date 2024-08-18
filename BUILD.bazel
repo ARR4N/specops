@@ -24,7 +24,7 @@ go_library(
         "stack.go",
         "tags.go",
     ],
-    importpath = "github.com/solidifylabs/specops",
+    importpath = "github.com/arr4n/specops",
     visibility = ["//visibility:public"],
     deps = [
         "//evmdebug",

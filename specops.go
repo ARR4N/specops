@@ -19,7 +19,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/holiman/uint256"
 
-	"github.com/solidifylabs/specops/types"
+	"github.com/arr4n/specops/types"
 )
 
 // Code is a slice of Bytecoders; it is itself a Bytecoder, allowing for
